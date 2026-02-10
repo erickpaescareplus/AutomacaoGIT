@@ -59,7 +59,7 @@ namespace AutomacaoGIT.Helpers
             await process.WaitForExitAsync(cancellationToken);
 
             return (process.ExitCode, outputBuilder.ToString(), errorBuilder.ToString());
-        }
+        } 
 
         /// <summary>
         /// Executa comando Git
