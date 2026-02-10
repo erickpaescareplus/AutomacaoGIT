@@ -15,7 +15,8 @@ namespace AutomacaoGIT.Helpers
             string fileName,
             string arguments,
             string? workingDirectory = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            Action<string>? onOutputReceived = null)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -36,13 +37,19 @@ namespace AutomacaoGIT.Helpers
             process.OutputDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
+                {
                     outputBuilder.AppendLine(e.Data);
+                    onOutputReceived?.Invoke(e.Data);
+                }
             };
 
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
+                {
                     errorBuilder.AppendLine(e.Data);
+                    onOutputReceived?.Invoke($"[STDERR] {e.Data}");
+                }
             };
 
             process.Start();
@@ -60,9 +67,10 @@ namespace AutomacaoGIT.Helpers
         public static Task<(int exitCode, string output, string error)> ExecuteGitCommandAsync(
             string arguments,
             string? workingDirectory = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            Action<string>? onOutputReceived = null)
         {
-            return ExecuteCommandAsync("git", arguments, workingDirectory, cancellationToken);
+            return ExecuteCommandAsync("git", arguments, workingDirectory, cancellationToken, onOutputReceived);
         }
     }
 }

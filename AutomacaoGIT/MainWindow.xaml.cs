@@ -46,6 +46,21 @@ namespace AutomacaoGIT
                 "feature-B253657_PreCad_Dados_De_Pagamnto",
                 "feature-B253637_PreCad_Dados_Gerais",
                 "feature-B252858_PreCad_Qualificacoes"
+            },
+            ["WEB"] = new List<string>
+            {
+                "feature-B239447_PCadOrdemRedeCredenciada_Beta",
+                "feature-B253650_PreCad_Corpo_Clinico",
+                "feature-B218164_Cadastro_Prestador_Inclusao",
+                "feature-B253647_PreCad_CHs",
+                "feature-B239441_Historico_Prestadores_Beta",
+                "feature-B253637_PreCad_Dados_Gerais",
+                "feature-B253645_PreCad_Especialidades",
+                "feature-B252854_PreCad_Controle_Docs",
+                "feature-B253657_PreCad_Dados_De_Pagamnto",
+                "feature-B252858_PreCad_Qualificacoes",
+                "feature-B252857_PreCad_Divulgacao_Atendimento",
+                "feature-B252856_PreCad_Negociacao_Mat_Med"
             }
         };
 
@@ -108,28 +123,46 @@ namespace AutomacaoGIT
                 {
                     AddLog("=== SUCESSO! ===");
                     
-                    // Buscar e abrir solution no Visual Studio
-                    var solutionPath = _vsLauncher.FindSolutionFile(request.FullProjectPath);
-                    
-                    if (solutionPath != null)
+                    // Verificar qual editor abrir
+                    if (RbVisualStudio != null && RbVisualStudio.IsChecked == true)
                     {
-                        AddLog($"Solution encontrada: {solutionPath}");
-                        AddLog("Abrindo Visual Studio...");
+                        // Buscar e abrir solution no Visual Studio
+                        var solutionPath = _vsLauncher.FindSolutionFile(request.FullProjectPath);
                         
-                        var opened = await _vsLauncher.OpenSolutionAsync(solutionPath);
-                        
-                        if (opened)
+                        if (solutionPath != null)
                         {
-                            AddLog("? Visual Studio aberto com sucesso!");
+                            AddLog($"Solution encontrada: {solutionPath}");
+                            AddLog("Abrindo Visual Studio...");
+                            
+                            var opened = await _vsLauncher.OpenSolutionAsync(solutionPath);
+                            
+                            if (opened)
+                            {
+                                AddLog("? Visual Studio aberto com sucesso!");
+                            }
+                            else
+                            {
+                                AddLog("?? Não foi possível abrir o Visual Studio automaticamente");
+                            }
                         }
                         else
                         {
-                            AddLog("? Não foi possível abrir o Visual Studio automaticamente");
+                            AddLog("?? Nenhuma solution (.sln) encontrada no projeto");
                         }
                     }
-                    else
+                    else if (RbVisualStudioCode != null && RbVisualStudioCode.IsChecked == true)
                     {
-                        AddLog("? Nenhuma solution (.sln) encontrada no projeto");
+                        AddLog("Abrindo Visual Studio Code...");
+                        var opened = await OpenVSCodeAsync(request.FullProjectPath);
+                        
+                        if (opened)
+                        {
+                            AddLog("? Visual Studio Code aberto com sucesso!");
+                        }
+                        else
+                        {
+                            AddLog("?? Não foi possível abrir o Visual Studio Code automaticamente");
+                        }
                     }
 
                     MessageBox.Show(
@@ -220,7 +253,13 @@ namespace AutomacaoGIT
                 TxtRepositoryUrl.Text = selectedItem.Tag?.ToString() ?? "";
 
                 // Atualiza as branches features disponíveis
-                var projectKey = selectedItem.Content?.ToString()?.StartsWith("CORE") == true ? "CORE" : "BFF";
+                var projectKey = "BFF";
+                var content = selectedItem.Content?.ToString() ?? "";
+                if (content.StartsWith("CORE"))
+                    projectKey = "CORE";
+                else if (content.StartsWith("WEB"))
+                    projectKey = "WEB";
+                
                 LoadFeatureBranches(projectKey);
             }
         }
@@ -292,6 +331,41 @@ namespace AutomacaoGIT
             TxtLocalBasePath.IsEnabled = !isExecuting;
             CmbFeatureBranch.IsEnabled = !isExecuting;
             TxtWitName.IsEnabled = !isExecuting;
+            
+            if (RbVisualStudio != null)
+                RbVisualStudio.IsEnabled = !isExecuting;
+            if (RbVisualStudioCode != null)
+                RbVisualStudioCode.IsEnabled = !isExecuting;
+        }
+
+        private async Task<bool> OpenVSCodeAsync(string projectPath)
+        {
+            try
+            {
+                var processInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "code",
+                    Arguments = $"\"{projectPath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using var process = System.Diagnostics.Process.Start(processInfo);
+                if (process != null)
+                {
+                    await Task.Delay(1000);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Erro ao abrir VS Code: {ex.Message}");
+                AddLog("Dica: Certifique-se de que o VS Code está instalado e o comando 'code' está no PATH.");
+                return false;
+            }
         }
     }
 }

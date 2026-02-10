@@ -132,7 +132,8 @@ namespace AutomacaoGIT.Services.Implementations
             var (exitCode, output, error) = await ProcessHelper.ExecuteGitCommandAsync(
                 arguments,
                 request.LocalBasePath,
-                cancellationToken);
+                cancellationToken,
+                (line) => log($"  {line}"));
 
             if (exitCode != 0)
             {
@@ -141,8 +142,6 @@ namespace AutomacaoGIT.Services.Implementations
             }
 
             log("? Repositório clonado com sucesso");
-            if (!string.IsNullOrWhiteSpace(output))
-                log($"  {output.Trim()}");
         }
 
         private async Task UpdateRepositoryAsync(
@@ -170,7 +169,8 @@ namespace AutomacaoGIT.Services.Implementations
             var (fetchCode, fetchOutput, fetchError) = await ProcessHelper.ExecuteGitCommandAsync(
                 "fetch --all",
                 request.FullProjectPath,
-                cancellationToken);
+                cancellationToken,
+                (line) => log($"  {line}"));
 
             if (fetchCode != 0)
             {
@@ -186,7 +186,8 @@ namespace AutomacaoGIT.Services.Implementations
             var (pullCode, pullOutput, pullError) = await ProcessHelper.ExecuteGitCommandAsync(
                 "pull",
                 request.FullProjectPath,
-                cancellationToken);
+                cancellationToken,
+                (line) => log($"  {line}"));
 
             if (pullCode != 0)
             {
@@ -196,8 +197,6 @@ namespace AutomacaoGIT.Services.Implementations
             else
             {
                 log("? Pull executado com sucesso");
-                if (!string.IsNullOrWhiteSpace(pullOutput))
-                    log($"  {pullOutput.Trim()}");
             }
         }
 
@@ -223,7 +222,8 @@ namespace AutomacaoGIT.Services.Implementations
                 var (checkoutCode, checkoutOutput, checkoutError) = await ProcessHelper.ExecuteGitCommandAsync(
                     $"checkout {request.BranchName}",
                     request.FullProjectPath,
-                    cancellationToken);
+                    cancellationToken,
+                    (line) => log($"  {line}"));
 
                 if (checkoutCode != 0)
                 {
@@ -253,7 +253,8 @@ namespace AutomacaoGIT.Services.Implementations
                         var (checkoutFeatureCode, _, checkoutFeatureError) = await ProcessHelper.ExecuteGitCommandAsync(
                             $"checkout {request.FeatureBranch}",
                             request.FullProjectPath,
-                            cancellationToken);
+                            cancellationToken,
+                            (line) => log($"  {line}"));
                         
                         if (checkoutFeatureCode != 0)
                         {
@@ -274,7 +275,8 @@ namespace AutomacaoGIT.Services.Implementations
                 var (createCode, createOutput, createError) = await ProcessHelper.ExecuteGitCommandAsync(
                     $"checkout -b {request.BranchName}",
                     request.FullProjectPath,
-                    cancellationToken);
+                    cancellationToken,
+                    (line) => log($"  {line}"));
 
                 if (createCode != 0)
                 {

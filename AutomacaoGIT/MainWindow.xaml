@@ -187,6 +187,8 @@
                                               Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-api"/>
                                 <ComboBoxItem Content="BFF - Credenciamento Prestador Cadastro BFF API" 
                                               Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-bff-api"/>
+                                <ComboBoxItem Content="WEB - Credenciamento Prestador Cadastro Web" 
+                                              Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-web"/>
                             </ComboBox>
 
                             <Label Content="🔗 URL do Repositório Git" Style="{StaticResource LabelStyle}"/>
@@ -225,9 +227,18 @@
                             <TextBox x:Name="TxtWitName" Style="{StaticResource TextBoxStyle}"
                                      Margin="0,0,0,12" Text=""/>
 
+                            <Label Content="💻 Editor para Abrir" Style="{StaticResource LabelStyle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <RadioButton x:Name="RbVisualStudio" Content="Visual Studio" 
+                                             IsChecked="True" Margin="0,0,20,0"
+                                             FontSize="13" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                                <RadioButton x:Name="RbVisualStudioCode" Content="Visual Studio Code" 
+                                             FontSize="13" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                            </StackPanel>
+
                             <Label Content="🤖 Prompt para IA (em breve)" Style="{StaticResource LabelStyle}"/>
                             <TextBox x:Name="TxtAIPrompt" Padding="10,8" FontSize="13"
-                                     Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                     Height="60" TextWrapping="Wrap" AcceptsReturn="True"
                                      IsEnabled="False" Background="#ECF0F1" BorderBrush="#BDC3C7"
                                      BorderThickness="1" VerticalScrollBarVisibility="Auto"
                                      Text="🚧 Funcionalidade em desenvolvimento..."/>
