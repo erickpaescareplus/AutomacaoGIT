@@ -1,0 +1,84 @@
+using AutomacaoGIT.Services.Implementations;
+using AutomacaoGIT.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using System.Windows;
+
+namespace AutomacaoGIT
+{
+    /// <summary>
+    /// EXEMPLO DE CONFIGURAÇÃO COM DEPENDENCY INJECTION
+    /// 
+    /// Este arquivo demonstra como configurar Dependency Injection
+    /// na aplicação WPF. Descomente e adapte conforme necessário.
+    /// </summary>
+    public partial class App : Application
+    {
+        // Descomentar para usar DI
+        /*
+        private ServiceProvider? _serviceProvider;
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+
+            // Configurar DI Container
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
+            _serviceProvider = serviceCollection.BuildServiceProvider();
+
+            // Abrir MainWindow usando DI
+            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+        }
+
+        private void ConfigureServices(IServiceCollection services)
+        {
+            // Registrar Serviços
+            services.AddSingleton<IGitAutomationService, GitAutomationService>();
+            services.AddSingleton<IVisualStudioLauncher, VisualStudioLauncher>();
+
+            // Registrar Windows
+            services.AddTransient<MainWindow>();
+
+            // Adicionar Logging (opcional)
+            services.AddLogging(configure =>
+            {
+                configure.AddConsole();
+                configure.AddDebug();
+            });
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _serviceProvider?.Dispose();
+            base.OnExit(e);
+        }
+        */
+
+        /* 
+         * PARA USAR ESTE EXEMPLO:
+         * 
+         * 1. Instalar pacote NuGet:
+         *    Install-Package Microsoft.Extensions.DependencyInjection
+         *    Install-Package Microsoft.Extensions.Logging.Console (opcional)
+         *    Install-Package Microsoft.Extensions.Logging.Debug (opcional)
+         * 
+         * 2. Modificar App.xaml para remover StartupUri:
+         *    <Application x:Class="AutomacaoGIT.App"
+         *                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         *                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+         *        <!-- Remover: StartupUri="MainWindow.xaml" -->
+         *    </Application>
+         * 
+         * 3. Modificar MainWindow.xaml.cs para receber dependências:
+         *    public MainWindow(IGitAutomationService gitService, IVisualStudioLauncher vsLauncher)
+         *    {
+         *        InitializeComponent();
+         *        _gitAutomationService = gitService;
+         *        _vsLauncher = vsLauncher;
+         *    }
+         * 
+         * 4. Descomentar o código acima neste arquivo
+         */
+    }
+}

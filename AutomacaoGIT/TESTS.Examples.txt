@@ -1,0 +1,282 @@
+/*
+ * EXEMPLOS DE TESTES UNITÁRIOS
+ * 
+ * Este arquivo contém exemplos de como criar testes unitários
+ * para os serviços de automação Git.
+ * 
+ * Para usar, crie um projeto de teste separado:
+ * - AutomacaoGIT.Tests (xUnit, NUnit ou MSTest)
+ * 
+ * Pacotes NuGet necessários:
+ * - xunit
+ * - xunit.runner.visualstudio
+ * - Moq (para mocks)
+ * - FluentAssertions (opcional, para assertions)
+ */
+
+/*
+using AutomacaoGIT.Models.DTOs;
+using AutomacaoGIT.Models.Enums;
+using AutomacaoGIT.Services.Implementations;
+using AutomacaoGIT.Services.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+
+namespace AutomacaoGIT.Tests.Services
+{
+    public class GitAutomationServiceTests
+    {
+        [Fact]
+        public async Task ExecuteAutomationAsync_WithValidRequest_ShouldSucceed()
+        {
+            // Arrange
+            var service = new GitAutomationService();
+            var request = new GitAutomationRequest
+            {
+                RepositoryUrl = "https://github.com/test/repo.git",
+                LocalBasePath = @"C:\Temp\Tests",
+                ProjectFolderName = "TestRepo"
+            };
+
+            var logs = new List<string>();
+
+            // Act
+            var result = await service.ExecuteAutomationAsync(
+                request,
+                onLogReceived: log => logs.Add(log)
+            );
+
+            // Assert
+            result.Should().NotBeNull();
+            logs.Should().NotBeEmpty();
+            logs.Should().Contain(log => log.Contains("INICIANDO AUTOMAÇÃO GIT"));
+        }
+
+        [Fact]
+        public async Task IsGitInstalledAsync_WhenGitInstalled_ShouldReturnTrue()
+        {
+            // Arrange
+            var service = new GitAutomationService();
+
+            // Act
+            var result = await service.IsGitInstalledAsync();
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ExecuteAutomationAsync_WithCancellation_ShouldReturnCancelledStatus()
+        {
+            // Arrange
+            var service = new GitAutomationService();
+            var request = new GitAutomationRequest
+            {
+                RepositoryUrl = "https://github.com/large/repo.git",
+                LocalBasePath = @"C:\Temp\Tests",
+                ProjectFolderName = "LargeRepo"
+            };
+
+            var cts = new CancellationTokenSource();
+            cts.Cancel(); // Cancelar imediatamente
+
+            // Act
+            var result = await service.ExecuteAutomationAsync(
+                request,
+                cancellationToken: cts.Token
+            );
+
+            // Assert
+            result.Status.Should().Be(GitOperationStatus.Cancelled);
+        }
+    }
+
+    public class VisualStudioLauncherTests
+    {
+        [Fact]
+        public void FindSolutionFile_WhenSolutionExists_ShouldReturnPath()
+        {
+            // Arrange
+            var launcher = new VisualStudioLauncher();
+            var testDirectory = @"C:\Projetos\TestProject";
+            
+            // Criar diretório de teste e arquivo .sln
+            Directory.CreateDirectory(testDirectory);
+            var solutionPath = Path.Combine(testDirectory, "Test.sln");
+            File.WriteAllText(solutionPath, "");
+
+            try
+            {
+                // Act
+                var result = launcher.FindSolutionFile(testDirectory);
+
+                // Assert
+                result.Should().NotBeNull();
+                result.Should().EndWith(".sln");
+            }
+            finally
+            {
+                // Cleanup
+                if (Directory.Exists(testDirectory))
+                    Directory.Delete(testDirectory, true);
+            }
+        }
+
+        [Fact]
+        public void FindSolutionFile_WhenNoSolutionExists_ShouldReturnNull()
+        {
+            // Arrange
+            var launcher = new VisualStudioLauncher();
+            var testDirectory = @"C:\Temp\EmptyDirectory";
+            
+            Directory.CreateDirectory(testDirectory);
+
+            try
+            {
+                // Act
+                var result = launcher.FindSolutionFile(testDirectory);
+
+                // Assert
+                result.Should().BeNull();
+            }
+            finally
+            {
+                // Cleanup
+                if (Directory.Exists(testDirectory))
+                    Directory.Delete(testDirectory, true);
+            }
+        }
+    }
+
+    public class GitAutomationResultTests
+    {
+        [Fact]
+        public void AddLog_ShouldAddTimestampedMessage()
+        {
+            // Arrange
+            var result = new GitAutomationResult();
+            var message = "Test message";
+
+            // Act
+            result.AddLog(message);
+
+            // Assert
+            result.Logs.Should().HaveCount(1);
+            result.Logs[0].Should().Contain(message);
+            result.Logs[0].Should().MatchRegex(@"\[\d{2}:\d{2}:\d{2}\]");
+        }
+
+        [Fact]
+        public void AddError_ShouldAddToErrorsAndLogs()
+        {
+            // Arrange
+            var result = new GitAutomationResult();
+            var error = "Test error";
+
+            // Act
+            result.AddError(error);
+
+            // Assert
+            result.Errors.Should().HaveCount(1);
+            result.Logs.Should().HaveCount(1);
+            result.Errors[0].Should().Contain("ERRO");
+            result.Errors[0].Should().Contain(error);
+        }
+
+        [Fact]
+        public void IsSuccess_WhenStatusIsSuccess_ShouldReturnTrue()
+        {
+            // Arrange
+            var result = new GitAutomationResult
+            {
+                Status = GitOperationStatus.Success
+            };
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Duration_WithStartAndEndTime_ShouldCalculateCorrectly()
+        {
+            // Arrange
+            var result = new GitAutomationResult
+            {
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddSeconds(5)
+            };
+
+            // Assert
+            result.Duration.Should().NotBeNull();
+            result.Duration.Value.TotalSeconds.Should().BeApproximately(5, 0.1);
+        }
+    }
+
+    // EXEMPLO DE TESTE DE INTEGRAÇÃO
+    public class GitAutomationIntegrationTests
+    {
+        [Fact]
+        [Trait("Category", "Integration")]
+        public async Task FullAutomationFlow_WithRealRepository_ShouldWork()
+        {
+            // Arrange
+            var gitService = new GitAutomationService();
+            var vsLauncher = new VisualStudioLauncher();
+            
+            var request = new GitAutomationRequest
+            {
+                RepositoryUrl = "https://github.com/dotnet/samples.git", // Repositório público pequeno
+                LocalBasePath = Path.Combine(Path.GetTempPath(), "GitAutomationTests"),
+                ProjectFolderName = "dotnet-samples-test",
+                BranchName = "main"
+            };
+
+            var logs = new List<string>();
+
+            try
+            {
+                // Act
+                var result = await gitService.ExecuteAutomationAsync(
+                    request,
+                    onLogReceived: log => logs.Add(log)
+                );
+
+                // Assert
+                result.Should().NotBeNull();
+                result.Status.Should().Be(GitOperationStatus.Success);
+                Directory.Exists(request.FullProjectPath).Should().BeTrue();
+                logs.Should().Contain(log => log.Contains("SUCESSO"));
+
+                // Verificar se encontra solutions
+                var solutionPath = vsLauncher.FindSolutionFile(request.FullProjectPath);
+                // Pode ou não ter .sln dependendo do repo
+            }
+            finally
+            {
+                // Cleanup
+                if (Directory.Exists(request.FullProjectPath))
+                {
+                    Directory.Delete(request.FullProjectPath, true);
+                }
+            }
+        }
+    }
+}
+*/
+
+/*
+ * COMANDOS ÚTEIS PARA TESTES:
+ * 
+ * Executar todos os testes:
+ *   dotnet test
+ * 
+ * Executar apenas testes unitários:
+ *   dotnet test --filter Category!=Integration
+ * 
+ * Executar com cobertura de código:
+ *   dotnet test /p:CollectCoverage=true
+ * 
+ * Executar em modo verbose:
+ *   dotnet test --verbosity detailed
+ */
