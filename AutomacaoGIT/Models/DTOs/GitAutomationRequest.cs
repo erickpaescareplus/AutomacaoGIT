@@ -33,11 +33,6 @@ namespace AutomacaoGIT.Models.DTOs
         public string? FeatureBranch { get; set; }
 
         /// <summary>
-        /// Prompt opcional para ser processado por agente de IA posteriormente
-        /// </summary>
-        public string? AIPrompt { get; set; }
-
-        /// <summary>
         /// Credenciais de acesso (opcional, pode usar credenciais do sistema)
         /// </summary>
         public string? Username { get; set; }

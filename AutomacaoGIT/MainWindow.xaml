@@ -1,20 +1,20 @@
-﻿<Window x:Class="AutomacaoGIT.MainWindow"
+﻿ <Window x:Class="AutomacaoGIT.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutomacaoGIT"
         mc:Ignorable="d"
-        Title="Automação Git - Desenvolvimento" Height="750" Width="1100"
+        Title="MUFASA GIT - Desenvolvimento" Height="800" Width="1400" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F7FA">
+        Background="#FFF8F0">
     
     <Window.Resources>
         <!-- Estilo para Labels -->
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="Foreground" Value="#D35400"/>
             <Setter Property="Margin" Value="0,8,0,4"/>
         </Style>
 
@@ -22,16 +22,17 @@
         <Style x:Key="TextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="BorderBrush" Value="#BDC3C7"/>
+            <Setter Property="BorderBrush" Value="#E67E22"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#3498DB"/>
+                    <Setter Property="BorderBrush" Value="#D35400"/>
+                    <Setter Property="BorderThickness" Value="2"/>
                 </Trigger>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#2980B9"/>
+                    <Setter Property="BorderBrush" Value="#BA4A00"/>
                     <Setter Property="BorderThickness" Value="2"/>
                 </Trigger>
             </Style.Triggers>
@@ -41,7 +42,7 @@
         <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="BorderBrush" Value="#BDC3C7"/>
+            <Setter Property="BorderBrush" Value="#E67E22"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -49,7 +50,7 @@
 
         <!-- Estilo para Botão Primário -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#27AE60"/>
+            <Setter Property="Background" Value="#E67E22"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="14"/>
@@ -63,6 +64,9 @@
                                 CornerRadius="6"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 BorderBrush="{TemplateBinding BorderBrush}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.2" Color="#000000"/>
+                            </Border.Effect>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -70,13 +74,13 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#229954"/>
+                    <Setter Property="Background" Value="#D35400"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#1E8449"/>
+                    <Setter Property="Background" Value="#BA4A00"/>
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#95A5A6"/>
+                    <Setter Property="Background" Value="#BDC3C7"/>
                     <Setter Property="Cursor" Value="Arrow"/>
                 </Trigger>
             </Style.Triggers>
@@ -84,13 +88,13 @@
 
         <!-- Estilo para Botão Secundário -->
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#E74C3C"/>
+            <Setter Property="Background" Value="#C0392B"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#C0392B"/>
+                    <Setter Property="Background" Value="#A93226"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#A93226"/>
+                    <Setter Property="Background" Value="#922B21"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -111,7 +115,7 @@
 
         <!-- Estilo para Botão Browse -->
         <Style x:Key="BrowseButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Background" Value="#E67E22"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Padding" Value="15,8"/>
@@ -131,10 +135,10 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#2980B9"/>
+                    <Setter Property="Background" Value="#D35400"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#2471A3"/>
+                    <Setter Property="Background" Value="#BA4A00"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -142,43 +146,65 @@
 
     <Grid>
         <!-- Header -->
-        <Border Background="#2C3E50" Height="70" VerticalAlignment="Top">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="30,0">
-                <TextBlock Text="🚀" FontSize="32" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                <StackPanel>
-                    <TextBlock Text="Automação Git" FontSize="24" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="Gerenciador de Branches e Repositórios" FontSize="12" Foreground="#BDC3C7" Margin="0,2,0,0"/>
+        <Border Background="#D35400" Height="70" VerticalAlignment="Top">
+            <Grid>
+                <Grid.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="3" Opacity="0.3" Color="#000000"/>
+                </Grid.Effect>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="30,0">
+                    <!-- Logo Mufasa -->
+                    <Border Width="50" Height="50" CornerRadius="25" 
+                            BorderBrush="#E67E22" BorderThickness="2"
+                            Background="White" Margin="0,0,15,0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.4" Color="#000000"/>
+                        </Border.Effect>
+                        <Image Source="pack://application:,,,/imgs/mufasa.png" Stretch="UniformToFill">
+                            <Image.Clip>
+                                <EllipseGeometry Center="25,25" RadiusX="23" RadiusY="23"/>
+                            </Image.Clip>
+                        </Image>
+                    </Border>
+                    
+                    <StackPanel>
+                        <TextBlock Text="Mufasa Automações" FontSize="24" FontWeight="Bold" Foreground="White">
+                            <TextBlock.Effect>
+                                <DropShadowEffect BlurRadius="3" ShadowDepth="1" Opacity="0.5" Color="#000000"/>
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <TextBlock Text="Gerenciador de Branches e Repositório + Gerador de PROMPT'S" FontSize="12" Foreground="#FDEBD0" Margin="0,2,0,0"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Conteúdo Principal -->
-        <Grid Margin="30,90,30,30">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <!-- Conteúdo Principal - Layout em 2 Colunas -->
+        <Grid Margin="20,90,20,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="500" MinWidth="400"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*" MinWidth="400"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- Formulário de Entrada -->
-            <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="25" Margin="0,0,0,20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
-                </Border.Effect>
-                
-                <StackPanel>
-                    <TextBlock Text="⚙️ Configuração do Repositório" FontSize="18" FontWeight="Bold" 
-                               Foreground="#2C3E50" Margin="0,0,0,20"/>
+            <!-- COLUNA ESQUERDA - Formulário de Configuração -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                <!-- Formulário de Entrada -->
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                    <Border Background="White" CornerRadius="8" Padding="20">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
+                        </Border.Effect>
 
-                        <!-- Coluna Esquerda -->
-                        <StackPanel Grid.Column="0">
+                        <StackPanel>
+                            <TextBlock Text="⚙️ Configuração do Repositório" FontSize="18" FontWeight="Bold" 
+                                       Foreground="#D35400" Margin="0,0,0,20"/>
+
+                            <!-- Projeto -->
                             <Label Content="📦 Projeto" Style="{StaticResource LabelStyle}"/>
                             <ComboBox x:Name="CmbProject" Style="{StaticResource ComboBoxStyle}"
                                       Margin="0,0,0,12" SelectedIndex="0" 
@@ -191,11 +217,13 @@
                                               Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-web"/>
                             </ComboBox>
 
+                            <!-- URL do Repositório -->
                             <Label Content="🔗 URL do Repositório Git" Style="{StaticResource LabelStyle}"/>
                             <TextBox x:Name="TxtRepositoryUrl" Style="{StaticResource TextBoxStyle}"
                                      IsReadOnly="True" Background="#ECF0F1" Margin="0,0,0,12"
                                      Text="https://github.com/CareplusBR/credenciamento-prestador-cadastro-api"/>
 
+                            <!-- Caminho Local Base -->
                             <Label Content="📂 Caminho Local Base" Style="{StaticResource LabelStyle}"/>
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
@@ -210,14 +238,13 @@
                                         Style="{StaticResource BrowseButtonStyle}"
                                         Click="BtnBrowseFolder_Click"/>
                             </Grid>
-                        </StackPanel>
 
-                        <!-- Coluna Direita -->
-                        <StackPanel Grid.Column="2">
+                            <!-- Branch Feature Base -->
                             <Label Content="🌿 Branch Feature Base" Style="{StaticResource LabelStyle}"/>
                             <ComboBox x:Name="CmbFeatureBranch" Style="{StaticResource ComboBoxStyle}"
                                       Margin="0,0,0,12" SelectedIndex="0"/>
 
+                            <!-- Nome da WIT -->
                             <Label Content="🏷️ Nome da WIT" Style="{StaticResource LabelStyle}">
                                 <Label.ToolTip>
                                     <ToolTip Content="Informe o identificador da Work Item (WIT)" 
@@ -227,6 +254,7 @@
                             <TextBox x:Name="TxtWitName" Style="{StaticResource TextBoxStyle}"
                                      Margin="0,0,0,12" Text=""/>
 
+                            <!-- Editor para Abrir -->
                             <Label Content="💻 Editor para Abrir" Style="{StaticResource LabelStyle}"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                 <RadioButton x:Name="RbVisualStudio" Content="Visual Studio" 
@@ -236,19 +264,189 @@
                                              FontSize="13" Foreground="#2C3E50" VerticalAlignment="Center"/>
                             </StackPanel>
 
-                            <Label Content="🤖 Prompt para IA (em breve)" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="TxtAIPrompt" Padding="10,8" FontSize="13"
-                                     Height="60" TextWrapping="Wrap" AcceptsReturn="True"
-                                     IsEnabled="False" Background="#ECF0F1" BorderBrush="#BDC3C7"
-                                     BorderThickness="1" VerticalScrollBarVisibility="Auto"
-                                     Text="🚧 Funcionalidade em desenvolvimento..."/>
+                            <!-- Toggle Gerador de Prompt -->
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,12">
+                                <CheckBox x:Name="ChkGeneratePrompt" Content="🔧 Habilitar Gerador de Prompt" 
+                                          FontSize="13" FontWeight="SemiBold" Foreground="#2C3E50"
+                                          VerticalAlignment="Center" Checked="ChkGeneratePrompt_Changed" 
+                                          Unchecked="ChkGeneratePrompt_Changed"/>
+                            </StackPanel>
+
+                            <!-- Seção do Gerador de Prompt -->
+                            <Border x:Name="PromptGeneratorSection" Visibility="Collapsed" 
+                                    Background="#FFF3E0" CornerRadius="6" Padding="15" Margin="0,0,0,12">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.15" Color="#E67E22"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <TextBlock Text="⚙️ Configurações do Gerador de Prompt" 
+                                               FontSize="14" FontWeight="Bold" Foreground="#D35400" Margin="0,0,0,10"/>
+                                    
+                                    <!-- Tipo de Template -->
+                                    <Label Content="📋 Tipo de Template" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox x:Name="CmbTemplateType" Style="{StaticResource ComboBoxStyle}"
+                                              Margin="0,0,0,10" SelectedIndex="0"
+                                              SelectionChanged="CmbTemplateType_SelectionChanged">
+                                        <ComboBoxItem Content="CORE - Credenciamento Prestador Cadastro API"/>
+                                        <ComboBoxItem Content="BFF - Credenciamento Prestador Cadastro BFF API"/>
+                                    </ComboBox>
+
+                                    <!-- Nome do Controller -->
+                                    <Label Content="🎯 Nome do Controller" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtPromptController" Style="{StaticResource TextBoxStyle}"
+                                             Margin="0,0,0,10" Text="ProviderRegister"/>
+                                    
+                                    <!-- Nome da Tabela (apenas para CORE) -->
+                                    <StackPanel x:Name="TableNameSection" Visibility="Visible">
+                                        <Label Content="🗄️ Nome da Tabela" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtPromptTableName" Style="{StaticResource TextBoxStyle}"
+                                                 Margin="0,0,0,10" Text="TB_PROVIDER_CITY"/>
+                                    </StackPanel>
+
+                                    <!-- Tipo de Endpoint -->
+                                    <Label Content="🔗 Tipo de Endpoint" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox x:Name="CmbEndpointType" Style="{StaticResource ComboBoxStyle}"
+                                              Margin="0,0,0,10" SelectedIndex="0">
+                                        <ComboBoxItem Content="Get"/>
+                                        <ComboBoxItem Content="Post"/>
+                                        <ComboBoxItem Content="Put"/>
+                                        <ComboBoxItem Content="Delete"/>
+                                    </ComboBox>
+
+                                    <!-- Nome do Endpoint -->
+                                    <Label Content="📌 Nome do Endpoint" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtPromptEndpoint" Style="{StaticResource TextBoxStyle}"
+                                             Margin="0,0,0,10" Text="City"/>
+
+                                    <!-- Nome do Método -->
+                                    <Label Content="⚡ Nome do Método" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtPromptMethod" Style="{StaticResource TextBoxStyle}"
+                                             Margin="0,0,0,10" Text="GetCity"/>
+
+                                    <!-- Colunas/Propriedades -->
+                                    <Label Content="📊 Colunas/Propriedades" Style="{StaticResource LabelStyle}" Margin="0,10,0,4"/>
+                                    
+                                    <!-- Container para campos dinâmicos -->
+                                    <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,10">
+                                        <StackPanel>
+                                            <!-- Lista de campos -->
+                                            <StackPanel x:Name="ColumnsContainer">
+                                                <!-- Campo inicial -->
+                                                <Grid Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="10"/>
+                                                        <ColumnDefinition Width="120"/>
+                                                        <ColumnDefinition Width="10"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <TextBox Grid.Column="0" x:Name="TxtColumnName1" 
+                                                             Style="{StaticResource TextBoxStyle}"
+                                                             Tag="ColumnName"
+                                                             Text="ID_CIDADE"/>
+                                                    
+                                                    <ComboBox Grid.Column="2" x:Name="CmbColumnType1"
+                                                              Style="{StaticResource ComboBoxStyle}"
+                                                              Tag="ColumnType"
+                                                              SelectedIndex="0">
+                                                        <ComboBoxItem Content="int"/>
+                                                        <ComboBoxItem Content="string"/>
+                                                        <ComboBoxItem Content="bool"/>
+                                                        <ComboBoxItem Content="decimal"/>
+                                                        <ComboBoxItem Content="DateTime"/>
+                                                        <ComboBoxItem Content="Guid"/>
+                                                        <ComboBoxItem Content="long"/>
+                                                        <ComboBoxItem Content="double"/>
+                                                    </ComboBox>
+                                                    
+                                                    <Button Grid.Column="4" Content="➖" 
+                                                            Width="30" Height="30"
+                                                            Background="#E74C3C" Foreground="White"
+                                                            BorderThickness="0" Cursor="Hand"
+                                                            FontWeight="Bold" FontSize="14"
+                                                            Click="BtnRemoveColumn_Click"
+                                                            Visibility="Collapsed">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" 
+                                                                        CornerRadius="4">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#C0392B"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </Grid>
+                                            </StackPanel>
+                                            
+                                            <!-- Botão adicionar campo -->
+                                            <Button x:Name="BtnAddColumn" Content="➕ Adicionar Coluna" 
+                                                    Background="#3498DB" Foreground="White"
+                                                    Padding="10,8" Margin="0,5,0,0"
+                                                    BorderThickness="0" Cursor="Hand"
+                                                    FontSize="12" FontWeight="SemiBold"
+                                                    Click="BtnAddColumn_Click">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" 
+                                                                CornerRadius="4">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#2980B9"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+                    </Border>
+                </ScrollViewer>
+
+                <!-- Botões de Ação -->
+                <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                    <Button x:Name="BtnExecute" Content="🚀 Executar Automação" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Height="45" Margin="0,5"
+                            Click="BtnExecute_Click"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="BtnCancel" Content="⛔ Cancelar" Grid.Column="0"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Height="40" Margin="0,5"
+                                Click="BtnCancel_Click" IsEnabled="False"/>
+                        <Button x:Name="BtnClearLogs" Content="🗑️ Limpar Logs" Grid.Column="2"
+                                Style="{StaticResource TertiaryButtonStyle}"
+                                Height="40" Margin="0,5"
+                                Click="BtnClearLogs_Click"/>
                     </Grid>
                 </StackPanel>
-            </Border>
+            </Grid>
 
-            <!-- Área de Logs -->
-            <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="0" Margin="0,0,0,20">
+            <!-- COLUNA DIREITA - Logs de Execução -->
+            <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="0">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
                 </Border.Effect>
@@ -260,36 +458,23 @@
                     </Grid.RowDefinitions>
 
                     <!-- Header dos Logs -->
-                    <Border Grid.Row="0" Background="#34495E" CornerRadius="8,8,0,0" Padding="20,12">
-                        <TextBlock Text="📋 Logs de Execução" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    <Border Grid.Row="0" Background="#D35400" CornerRadius="8,8,0,0" Padding="20,12">
+                        <Grid>
+                            <TextBlock Text="📋 Logs de Execução" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Left"/>
+                            <TextBlock Text="[MUFASA MODE]" FontSize="11" Foreground="#FDEBD0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
                     </Border>
 
                     <!-- Conteúdo dos Logs -->
-                    <Border Grid.Row="1" Padding="15" Background="#FAFAFA">
-                        <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto">
-                            <TextBlock x:Name="TxtLogs" FontFamily="Consolas" FontSize="12" 
-                                      TextWrapping="Wrap" Padding="10" Foreground="#2C3E50"
+                    <Border Grid.Row="1" Padding="15" Background="#FFFAF5">
+                        <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <TextBlock x:Name="TxtLogs" FontFamily="Consolas" FontSize="11" 
+                                      TextWrapping="NoWrap" Padding="10" Foreground="#D35400"
                                       Background="Transparent"/>
                         </ScrollViewer>
                     </Border>
                 </Grid>
             </Border>
-
-            <!-- Botões de Ação -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button x:Name="BtnExecute" Content="🚀 Executar Automação" 
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Width="220" Height="45" Margin="5"
-                        Click="BtnExecute_Click"/>
-                <Button x:Name="BtnCancel" Content="⛔ Cancelar" 
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Width="140" Height="45" Margin="5"
-                        Click="BtnCancel_Click" IsEnabled="False"/>
-                <Button x:Name="BtnClearLogs" Content="🗑️ Limpar Logs" 
-                        Style="{StaticResource TertiaryButtonStyle}"
-                        Width="140" Height="45" Margin="5"
-                        Click="BtnClearLogs_Click"/>
-            </StackPanel>
         </Grid>
     </Grid>
 </Window>

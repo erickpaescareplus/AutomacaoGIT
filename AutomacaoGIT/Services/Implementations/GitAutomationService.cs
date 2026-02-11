@@ -79,12 +79,6 @@ namespace AutomacaoGIT.Services.Implementations
                     await ManageBranchAsync(request, Log, LogError, cancellationToken);
                 }
 
-                // Armazena o prompt de IA se fornecido
-                if (!string.IsNullOrWhiteSpace(request.AIPrompt))
-                {
-                    await SaveAIPromptAsync(request, Log, cancellationToken);
-                }
-
                 result.Status = GitOperationStatus.Success;
                 result.EndTime = DateTime.Now;
                 Log($"=== AUTOMAÇÃO CONCLUÍDA COM SUCESSO EM {result.Duration?.TotalSeconds:F2}s ===");
@@ -286,23 +280,6 @@ namespace AutomacaoGIT.Services.Implementations
                 {
                     log($"? Branch criada e checkout realizado: {request.BranchName}");
                 }
-            }
-        }
-
-        private async Task SaveAIPromptAsync(
-            GitAutomationRequest request,
-            Action<string> log,
-            CancellationToken cancellationToken)
-        {
-            try
-            {
-                var promptFilePath = Path.Combine(request.FullProjectPath, ".ai-prompt.txt");
-                await File.WriteAllTextAsync(promptFilePath, request.AIPrompt!, cancellationToken);
-                log($"? Prompt de IA salvo em: {promptFilePath}");
-            }
-            catch (Exception ex)
-            {
-                log($"? Não foi possível salvar o prompt de IA: {ex.Message}");
             }
         }
     }
