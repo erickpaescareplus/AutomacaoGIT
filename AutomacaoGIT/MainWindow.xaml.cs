@@ -300,6 +300,32 @@ namespace AutomacaoGIT
                     projectKey = "WEB";
                 
                 LoadFeatureBranches(projectKey);
+                
+                // Desabilita gerador de prompt para WEB
+                UpdatePromptGeneratorAvailability(projectKey);
+            }
+        }
+
+        private void UpdatePromptGeneratorAvailability(string projectKey)
+        {
+            if (ChkGeneratePrompt == null)
+                return;
+
+            if (projectKey == "WEB")
+            {
+                // Desabilita para WEB
+                ChkGeneratePrompt.IsEnabled = false;
+                ChkGeneratePrompt.IsChecked = false;
+                ChkGeneratePrompt.Content = "?? Gerador de Prompt (Em Construção para WEB)";
+                ChkGeneratePrompt.ToolTip = "O gerador de prompt para projeto WEB está em desenvolvimento";
+                PromptGeneratorSection.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                // Habilita para CORE e BFF
+                ChkGeneratePrompt.IsEnabled = true;
+                ChkGeneratePrompt.Content = "?? Habilitar Gerador de Prompt";
+                ChkGeneratePrompt.ToolTip = null;
             }
         }
 

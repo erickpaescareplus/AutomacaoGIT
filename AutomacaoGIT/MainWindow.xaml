@@ -142,6 +142,17 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Estilo para CheckBox -->
+        <Style x:Key="CheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="#95A5A6"/>
+                    <Setter Property="Opacity" Value="0.6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -266,9 +277,12 @@
 
                             <!-- Toggle Gerador de Prompt -->
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,12">
-                                <CheckBox x:Name="ChkGeneratePrompt" Content="🔧 Habilitar Gerador de Prompt" 
-                                          FontSize="13" FontWeight="SemiBold" Foreground="#2C3E50"
-                                          VerticalAlignment="Center" Checked="ChkGeneratePrompt_Changed" 
+                                <CheckBox x:Name="ChkGeneratePrompt" 
+                                          Content="🔧 Habilitar Gerador de Prompt" 
+                                          Style="{StaticResource CheckBoxStyle}"
+                                          FontSize="13" FontWeight="SemiBold"
+                                          VerticalAlignment="Center" 
+                                          Checked="ChkGeneratePrompt_Changed" 
                                           Unchecked="ChkGeneratePrompt_Changed"/>
                             </StackPanel>
 
