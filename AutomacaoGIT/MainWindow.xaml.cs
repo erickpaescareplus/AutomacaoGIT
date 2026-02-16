@@ -66,6 +66,18 @@ namespace AutomacaoGIT
                 var isCloneOnly = ChkCloneOnly?.IsChecked == true;
                 var witName = isCloneOnly ? null : TxtWitName.Text.Trim();
 
+                // Gerar prompt ANTES de criar o request (de forma assíncrona para não congelar UI)
+                string? aiPrompt = null;
+                if (ChkGeneratePrompt?.IsChecked == true)
+                {
+                    AddLog("📝 Gerando prompt...");
+                    aiPrompt = await GeneratePromptFromInputsAsync();
+                    if (aiPrompt != null)
+                    {
+                        AddLog("✅ Prompt gerado com sucesso!");
+                    }
+                }
+
                 var request = new GitAutomationRequest
                 {
                     RepositoryUrl = repositoryUrl,
@@ -73,19 +85,13 @@ namespace AutomacaoGIT
                     ProjectFolderName = projectFolderName,
                     BranchName = witName,
                     FeatureBranch = CmbFeatureBranch.SelectedItem?.ToString(),
-                    AIPrompt = null
+                    AIPrompt = aiPrompt
                 };
 
                 AddLog("=== INICIANDO EXECUÇÃO ===");
                 if (isCloneOnly)
                 {
-                    AddLog("📥 Modo: Apenas Clonar (sem criar branch WIT)");
-                    AddLog($"🌿 Branch alvo: {CmbFeatureBranch.SelectedItem}");
-                }
-                else
-                {
-                    AddLog($"🏷️ Branch WIT: {witName}");
-                    AddLog($"🌿 Branch base: {CmbFeatureBranch.SelectedItem}");
+                    AddLog("?? Modo: Apenas Clonar (sem criar branch WIT)");
                 }
                 AddLog("");
 
@@ -284,6 +290,9 @@ namespace AutomacaoGIT
                 }
                 
                 TxtRepositoryUrl.Text = repositoryUrl;
+
+                // Atualizar visibilidade da seção de tabela no gerador de prompt
+                UpdateTableNameSectionVisibility();
 
                 // Carregar branches do GitHub
                 await LoadFeatureBranchesFromGitHubAsync(repositoryUrl);
@@ -508,6 +517,30 @@ namespace AutomacaoGIT
             }
         }
 
+        private void ChkGeneratePrompt_Changed(object sender, RoutedEventArgs e)
+        {
+            if (PromptGeneratorSection != null)
+            {
+                PromptGeneratorSection.Visibility = ChkGeneratePrompt?.IsChecked == true 
+                    ? Visibility.Visible 
+                    : Visibility.Collapsed;
+                
+                // Atualizar visibilidade da seção de tabela baseado no projeto selecionado
+                UpdateTableNameSectionVisibility();
+            }
+        }
+
+        private void UpdateTableNameSectionVisibility()
+        {
+            if (TableNameSection == null || CmbProject == null) return;
+            
+            // Mostrar seção de nome da tabela apenas para projetos CORE
+            var selectedProject = (CmbProject.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+            TableNameSection.Visibility = selectedProject.Contains("CORE") 
+                ? Visibility.Visible 
+                : Visibility.Collapsed;
+        }
+
         private void ChkCloneOnly_Changed(object sender, RoutedEventArgs e)
         {
             if (TxtWitName != null)
@@ -525,8 +558,99 @@ namespace AutomacaoGIT
             }
         }
 
+        private void BtnAddColumn_Click(object sender, RoutedEventArgs e)
+        {
+            if (ColumnsContainer == null) return;
+
+            var columnIndex = ColumnsContainer.Children.Count + 1;
+            var newColumnGrid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+            
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var txtColumnName = new WpfTextBox
+            {
+                Name = $"TxtColumnName{columnIndex}",
+                Style = (Style)FindResource("TextBoxStyle"),
+                Tag = "ColumnName"
+            };
+            Grid.SetColumn(txtColumnName, 0);
+
+            var cmbColumnType = new WpfComboBox
+            {
+                Name = $"CmbColumnType{columnIndex}",
+                Style = (Style)FindResource("ComboBoxStyle"),
+                Tag = "ColumnType",
+                SelectedIndex = 0
+            };
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "int" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "string" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "bool" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "decimal" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "DateTime" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "Guid" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "long" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "double" });
+            Grid.SetColumn(cmbColumnType, 2);
+
+            var btnRemove = new WpfButton
+            {
+                Content = "?",
+                Width = 30,
+                Height = 30,
+                Background = System.Windows.Media.Brushes.Red,
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderThickness = new Thickness(0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                FontWeight = FontWeights.Bold,
+                FontSize = 14
+            };
+            btnRemove.Click += BtnRemoveColumn_Click;
+            Grid.SetColumn(btnRemove, 4);
+
+            newColumnGrid.Children.Add(txtColumnName);
+            newColumnGrid.Children.Add(cmbColumnType);
+            newColumnGrid.Children.Add(btnRemove);
+
+            ColumnsContainer.Children.Add(newColumnGrid);
+            UpdateRemoveButtonsVisibility();
+        }
+
+        private void BtnRemoveColumn_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is WpfButton button && button.Parent is Grid grid)
+            {
+                ColumnsContainer?.Children.Remove(grid);
+                UpdateRemoveButtonsVisibility();
+            }
+        }
+
+        private void UpdateRemoveButtonsVisibility()
+        {
+            if (ColumnsContainer == null) return;
+
+            var shouldShowRemove = ColumnsContainer.Children.Count > 1;
+            
+            foreach (var child in ColumnsContainer.Children)
+            {
+                if (child is Grid grid)
+                {
+                    foreach (var gridChild in grid.Children)
+                    {
+                        if (gridChild is WpfButton btn && btn.Content?.ToString() == "?")
+                        {
+                            btn.Visibility = shouldShowRemove ? Visibility.Visible : Visibility.Collapsed;
+                        }
+                    }
+                }
+            }
+        }
+
         // ============================================
-        // MÉTODOS DA ABA GERADOR DE PROMPT
+        // MÉTODOS DA ABA STANDALONE DE GERADOR DE PROMPT
         // ============================================
 
         private string? _generatedPromptCache;
@@ -642,18 +766,6 @@ namespace AutomacaoGIT
 
                 // Detectar tipo automaticamente baseado no projeto selecionado
                 var selectedProject = (CmbPromptProjectType?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
-                
-                // Verificar se é WEB (ainda não suportado)
-                if (selectedProject.Contains("WEB"))
-                {
-                    TxtGeneratedPrompt.Text = "🚧 Template para projetos WEB ainda está em desenvolvimento.\n\n" +
-                                             "Em breve esta funcionalidade estará disponível!\n\n" +
-                                             "Por enquanto, utilize os templates para:\n" +
-                                             "  • CORE - API de Cadastro\n" +
-                                             "  • BFF - API Gateway";
-                    return;
-                }
-                
                 var templateType = selectedProject.Contains("CORE") ? "CORE" : 
                                   selectedProject.Contains("BFF") ? "BFF" : "CORE";
                 
@@ -763,6 +875,63 @@ namespace AutomacaoGIT
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+        }
+
+        private async Task<string?> GeneratePromptFromInputsAsync()
+        {
+            if (ChkGeneratePrompt?.IsChecked != true) return null;
+
+            // Detectar tipo automaticamente baseado no projeto selecionado
+            var selectedProject = (CmbProject.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+            var templateType = selectedProject.Contains("CORE") ? "CORE" : 
+                              selectedProject.Contains("BFF") ? "BFF" : "CORE";
+            
+            var controller = TxtPromptController?.Text?.Trim() ?? "";
+            var tableName = TxtPromptTableName?.Text?.Trim() ?? "";
+            var endpointType = (CmbEndpointType?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Get";
+            var endpointName = TxtPromptEndpoint?.Text?.Trim() ?? "";
+            var methodName = TxtPromptMethod?.Text?.Trim() ?? "";
+
+            if (string.IsNullOrEmpty(controller) || string.IsNullOrEmpty(endpointName) || string.IsNullOrEmpty(methodName))
+                return null;
+
+            var columns = new List<(string name, string type)>();
+            if (ColumnsContainer != null)
+            {
+                foreach (var child in ColumnsContainer.Children)
+                {
+                    if (child is Grid grid)
+                    {
+                        string? columnName = null;
+                        string? columnType = null;
+
+                        foreach (var gridChild in grid.Children)
+                        {
+                            if (gridChild is WpfTextBox txt && txt.Tag?.ToString() == "ColumnName")
+                                columnName = txt.Text?.Trim();
+                            else if (gridChild is WpfComboBox cmb && cmb.Tag?.ToString() == "ColumnType")
+                                columnType = (cmb.SelectedItem as ComboBoxItem)?.Content?.ToString();
+                        }
+
+                        if (!string.IsNullOrEmpty(columnName) && !string.IsNullOrEmpty(columnType))
+                            columns.Add((columnName, columnType));
+                    }
+                }
+            }
+
+            // Usar o serviço de templates (AGORA ASYNC!)
+            var templateService = new PromptTemplateService();
+            var prompt = await templateService.GeneratePromptFromTemplateAsync(
+                templateType,
+                controller,
+                tableName,
+                endpointType,
+                endpointName,
+                methodName,
+                columns
+            );
+
+            return prompt;
         }
     }
 }

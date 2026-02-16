@@ -1,14 +1,9 @@
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.IO;
 
 namespace AutomacaoGIT.Services.Implementations
 {
     public class PromptTemplateService
     {
-        private const string TEMPLATE_FOLDER = "templatesGeradorPrompt";
-
         public async Task<string> GeneratePromptFromTemplateAsync(
             string templateType,
             string controller,
@@ -18,54 +13,12 @@ namespace AutomacaoGIT.Services.Implementations
             string methodName,
             List<(string name, string type)> columns)
         {
-            try
-            {
-                // Determinar qual arquivo de template usar
-                string templateFileName = templateType switch
-                {
-                    "CORE" => "netCore8-CQRS-API-Sandbox012026.json",
-                    "BFF" => "netCore8-CQRS-BFF-Sandbox012026.json",
-                    _ => throw new ArgumentException($"Template tipo '{templateType}' não suportado")
-                };
-
-                // Buscar o arquivo de template
-                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, TEMPLATE_FOLDER, templateFileName);
-
-                if (!File.Exists(templatePath))
-                {
-                    // Fallback: tentar no diretório do projeto
-                    var projectDir = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)?.Parent?.Parent?.Parent?.FullName;
-                    if (projectDir != null)
-                    {
-                        templatePath = Path.Combine(projectDir, TEMPLATE_FOLDER, templateFileName);
-                    }
-                }
-
-                if (!File.Exists(templatePath))
-                {
-                    return $"? Erro: Template '{templateFileName}' não encontrado.\n\nCaminho esperado: {templatePath}";
-                }
-
-                // Ler e processar o template JSON
-                string jsonContent = await File.ReadAllTextAsync(templatePath);
-                var template = JsonSerializer.Deserialize<PromptTemplate>(jsonContent);
-
-                if (template?.Steps == null || template.Steps.Count == 0)
-                {
-                    return "? Erro: Template JSON inválido ou vazio.";
-                }
-
-                // Gerar o prompt baseado no template
-                return GeneratePromptFromJsonTemplate(template, controller, tableName, endpointType, endpointName, methodName, columns);
-            }
-            catch (Exception ex)
-            {
-                return $"? Erro ao gerar prompt:\n{ex.Message}\n\nStack Trace:\n{ex.StackTrace}";
-            }
+            return await Task.Run(() => GeneratePromptFromTemplate(
+                templateType, controller, tableName, endpointType, endpointName, methodName, columns));
         }
 
-        private string GeneratePromptFromJsonTemplate(
-            PromptTemplate template,
+        private string GeneratePromptFromTemplate(
+            string templateType,
             string controller,
             string tableName,
             string endpointType,
@@ -75,261 +28,185 @@ namespace AutomacaoGIT.Services.Implementations
         {
             var sb = new StringBuilder();
 
-            // Criar lista de colunas formatada
-            string columnsFormatted = FormatColumnsForPrompt(columns);
-
-            // Cabeçalho do Prompt
-            sb.AppendLine("# ?? Prompt para GitHub Copilot - Implementação de Endpoint");
+            sb.AppendLine("# ?? Prompt para GitHub Copilot");
             sb.AppendLine();
-            sb.AppendLine("## ?? Informações do Endpoint");
-            sb.AppendLine();
-            sb.AppendLine($"- **Controller:** {controller}");
-            if (!string.IsNullOrEmpty(tableName))
-            {
-                sb.AppendLine($"- **Tabela:** {tableName}");
-            }
-            sb.AppendLine($"- **Tipo de Endpoint:** {endpointType}");
-            sb.AppendLine($"- **Nome do Endpoint:** {endpointName}");
-            sb.AppendLine($"- **Nome do Método:** {methodName}");
+            sb.AppendLine($"**Tipo de Projeto:** {templateType}");
+            sb.AppendLine($"**Controller:** {controller}");
             
-            if (columns.Any())
+            if (templateType == "CORE" && !string.IsNullOrEmpty(tableName))
             {
-                sb.AppendLine($"- **Colunas/Propriedades:**");
-                foreach (var col in columns)
-                {
-                    sb.AppendLine($"  - `{col.type} {ConvertToPascalCase(col.name)}`");
-                }
+                sb.AppendLine($"**Tabela:** {tableName}");
             }
             
+            sb.AppendLine($"**Endpoint:** {endpointType} /{endpointName}");
+            sb.AppendLine($"**Método:** {methodName}");
             sb.AppendLine();
             sb.AppendLine("---");
             sb.AppendLine();
 
-            // Processar cada etapa do template
-            sb.AppendLine("## ?? Etapas de Implementação");
-            sb.AppendLine();
-
-            for (int i = 0; i < template.Steps.Count; i++)
+            if (templateType == "CORE")
             {
-                var step = template.Steps[i];
-                sb.AppendLine($"### {step.Titulo ?? $"Etapa {i + 1}"}");
-                sb.AppendLine();
-
-                // Descrição
-                if (!string.IsNullOrEmpty(step.Descricao))
-                {
-                    string descricao = ReplaceVariables(step.Descricao, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Descrição:** {descricao}");
-                    sb.AppendLine();
-                }
-
-                // Caminho (se houver)
-                if (!string.IsNullOrEmpty(step.Caminho))
-                {
-                    string caminho = ReplaceVariables(step.Caminho, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Caminho:** `{caminho}`");
-                    sb.AppendLine();
-                }
-
-                // Namespace (se houver)
-                if (!string.IsNullOrEmpty(step.Namespace))
-                {
-                    string ns = ReplaceVariables(step.Namespace, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Namespace:** `{ns}`");
-                    sb.AppendLine();
-                }
-
-                // Arquivo (se houver)
-                if (!string.IsNullOrEmpty(step.Arquivo))
-                {
-                    string arquivo = ReplaceVariables(step.Arquivo, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Arquivo:** `{arquivo}`");
-                    sb.AppendLine();
-                }
-
-                // Exemplo de código
-                if (!string.IsNullOrEmpty(step.Exemplo))
-                {
-                    string exemplo = ReplaceVariables(step.Exemplo, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    exemplo = exemplo.Replace("\\n", "\n").Replace("\\\"", "\"");
-                    sb.AppendLine("**Exemplo de implementação:**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(exemplo);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Interface (BFF)
-                if (!string.IsNullOrEmpty(step.Interfaces))
-                {
-                    string interfaceCode = ReplaceVariables(step.Interfaces, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine("**Interface:**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(interfaceCode);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Implementação (BFF)
-                if (!string.IsNullOrEmpty(step.Implementacao))
-                {
-                    string impl = ReplaceVariables(step.Implementacao, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    impl = impl.Replace("\\n", "\n").Replace("\\\"", "\"");
-                    sb.AppendLine("**Implementação:**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(impl);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Caminho Interface (API)
-                if (!string.IsNullOrEmpty(step.CaminhoInterface))
-                {
-                    string caminhoInterface = ReplaceVariables(step.CaminhoInterface, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Caminho Interface:** `{caminhoInterface}`");
-                    sb.AppendLine();
-                }
-
-                // Caminho Service (API)
-                if (!string.IsNullOrEmpty(step.CaminhoService))
-                {
-                    string caminhoService = ReplaceVariables(step.CaminhoService, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Caminho Service:** `{caminhoService}`");
-                    sb.AppendLine();
-                }
-
-                // Interface Exemplo (API)
-                if (!string.IsNullOrEmpty(step.InterfaceExemplo))
-                {
-                    string interfaceEx = ReplaceVariables(step.InterfaceExemplo, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine("**Interface (exemplo):**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(interfaceEx);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Implementação Exemplo (API)
-                if (!string.IsNullOrEmpty(step.ImplementacaoExemplo))
-                {
-                    string implEx = ReplaceVariables(step.ImplementacaoExemplo, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    implEx = implEx.Replace("\\n", "\n").Replace("\\\"", "\"");
-                    sb.AppendLine("**Implementação (exemplo):**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(implEx);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Caminho Domain (API)
-                if (!string.IsNullOrEmpty(step.CaminhoDomain))
-                {
-                    string caminhoDomain = ReplaceVariables(step.CaminhoDomain, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Caminho Domain:** `{caminhoDomain}`");
-                    sb.AppendLine();
-                }
-
-                // Exemplo Interface (API)
-                if (!string.IsNullOrEmpty(step.ExemploInterface))
-                {
-                    string exemploInterface = ReplaceVariables(step.ExemploInterface, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    exemploInterface = exemploInterface.Replace("\\n", "\n").Replace("\\\"", "\"");
-                    sb.AppendLine("**Interface (definição):**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(exemploInterface);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Interface API Service (BFF)
-                if (!string.IsNullOrEmpty(step.InterfaceApiService))
-                {
-                    string interfaceApiService = ReplaceVariables(step.InterfaceApiService, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine("**Interface API Service:**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(interfaceApiService);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Implementação API Service (BFF)
-                if (!string.IsNullOrEmpty(step.ImplementacaoApiService))
-                {
-                    string implApiService = ReplaceVariables(step.ImplementacaoApiService, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    implApiService = implApiService.Replace("\\n", "\n").Replace("\\\"", "\"");
-                    sb.AppendLine("**Implementação API Service:**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(implApiService);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Modelo Base (BFF)
-                if (!string.IsNullOrEmpty(step.ModeloBase))
-                {
-                    string modeloBase = ReplaceVariables(step.ModeloBase, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    modeloBase = modeloBase.Replace("\\n", "\n").Replace("\\\"", "\"");
-                    sb.AppendLine("**Modelo Base (exemplo):**");
-                    sb.AppendLine("```csharp");
-                    sb.AppendLine(modeloBase);
-                    sb.AppendLine("```");
-                    sb.AppendLine();
-                }
-
-                // Observação
-                if (!string.IsNullOrEmpty(step.Observacao))
-                {
-                    string obs = ReplaceVariables(step.Observacao, controller, tableName, endpointType, endpointName, methodName, columnsFormatted);
-                    sb.AppendLine($"**Observação:** {obs}");
-                    sb.AppendLine();
-                }
-
-                sb.AppendLine("---");
-                sb.AppendLine();
+                GenerateCorePrompt(sb, controller, tableName, endpointType, endpointName, methodName, columns);
             }
-
-            // Rodapé
-            sb.AppendLine("## ? Checklist Final");
-            sb.AppendLine();
-            sb.AppendLine("- [ ] Todas as classes foram criadas");
-            sb.AppendLine("- [ ] Dependências foram registradas no DI Container");
-            sb.AppendLine("- [ ] Testes unitários foram implementados");
-            sb.AppendLine("- [ ] Documentação Swagger foi atualizada");
-            sb.AppendLine("- [ ] Code review foi realizado");
-            sb.AppendLine();
-            sb.AppendLine("---");
-            sb.AppendLine("*Prompt gerado automaticamente pelo Mufasa Automações* ??");
+            else if (templateType == "BFF")
+            {
+                GenerateBffPrompt(sb, controller, endpointType, endpointName, methodName, columns);
+            }
+            else if (templateType == "WEB")
+            {
+                GenerateWebPrompt(sb, controller, endpointType, endpointName, methodName, columns);
+            }
 
             return sb.ToString();
         }
 
-        private string FormatColumnsForPrompt(List<(string name, string type)> columns)
-        {
-            if (columns == null || columns.Count == 0)
-                return "Nenhuma coluna especificada";
-
-            return string.Join(", ", columns.Select(c => $"{c.name} ({c.type})"));
-        }
-
-        private string ReplaceVariables(
-            string text,
+        private void GenerateCorePrompt(
+            StringBuilder sb,
             string controller,
             string tableName,
             string endpointType,
             string endpointName,
             string methodName,
-            string columnsFormatted)
+            List<(string name, string type)> columns)
         {
-            if (string.IsNullOrEmpty(text))
-                return text;
+            sb.AppendLine("## ?? Instruções para Implementação (CORE API)");
+            sb.AppendLine();
+            sb.AppendLine("### 1. Criar Entity");
+            sb.AppendLine($"Criar uma nova Entity chamada `{endpointName}` na pasta `Domain/Entities` com as seguintes propriedades:");
+            sb.AppendLine();
+            
+            foreach (var column in columns)
+            {
+                sb.AppendLine($"- `{column.type} {ConvertToPascalCase(column.name)}`");
+            }
+            
+            sb.AppendLine();
+            sb.AppendLine("### 2. Criar Mapping (Dapper)");
+            sb.AppendLine($"Criar o mapping Dapper para a entidade `{endpointName}` na pasta `Infrastructure/Data/Mappings`, mapeando para a tabela `{tableName}`:");
+            sb.AppendLine();
+            
+            foreach (var column in columns)
+            {
+                sb.AppendLine($"- `{ConvertToPascalCase(column.name)}` -> `{column.name}`");
+            }
+            
+            sb.AppendLine();
+            sb.AppendLine("### 3. Criar Repository Interface");
+            sb.AppendLine($"Criar interface `I{endpointName}Repository` em `Domain/Interfaces/Repositories` com o método:");
+            sb.AppendLine($"```csharp");
+            sb.AppendLine($"Task<IEnumerable<{endpointName}>> {methodName}Async();");
+            sb.AppendLine("```");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 4. Implementar Repository");
+            sb.AppendLine($"Implementar `{endpointName}Repository` em `Infrastructure/Repositories` usando Dapper.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 5. Criar Service Interface");
+            sb.AppendLine($"Criar interface `I{endpointName}Service` em `Application/Interfaces` com o método:");
+            sb.AppendLine($"```csharp");
+            sb.AppendLine($"Task<IEnumerable<{endpointName}>> {methodName}Async();");
+            sb.AppendLine("```");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 6. Implementar Service");
+            sb.AppendLine($"Implementar `{endpointName}Service` em `Application/Services` usando o repository.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 7. Adicionar Endpoint no Controller");
+            sb.AppendLine($"Adicionar endpoint `{endpointType.ToUpper()} /{endpointName}` no controller `{controller}Controller`:");
+            sb.AppendLine($"```csharp");
+            sb.AppendLine($"[Http{endpointType}(\"{endpointName}\")]");
+            sb.AppendLine($"public async Task<IActionResult> {methodName}()");
+            sb.AppendLine($"{{");
+            sb.AppendLine($"    var result = await _{ToCamelCase(endpointName)}Service.{methodName}Async();");
+            sb.AppendLine($"    return Ok(result);");
+            sb.AppendLine($"}}");
+            sb.AppendLine("```");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 8. Registrar no DI Container");
+            sb.AppendLine("Registrar as dependências no `Startup.cs` ou `Program.cs`.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 9. Criar Testes Unitários");
+            sb.AppendLine($"Criar testes para `{endpointName}Service` e `{controller}Controller`.");
+        }
 
-            return text
-                .Replace("{nomeController}", controller)
-                .Replace("{tabela}", tableName)
-                .Replace("{tipoEndpoint}", endpointType)
-                .Replace("{nomeEndpoint}", endpointName)
-                .Replace("{nomeMetodo}", methodName)
-                .Replace("{colunas}", columnsFormatted);
+        private void GenerateBffPrompt(
+            StringBuilder sb,
+            string controller,
+            string endpointType,
+            string endpointName,
+            string methodName,
+            List<(string name, string type)> columns)
+        {
+            sb.AppendLine("## ?? Instruções para Implementação (BFF API)");
+            sb.AppendLine();
+            sb.AppendLine("### 1. Criar DTO de Request");
+            sb.AppendLine($"Criar `{endpointName}Request` em `Models/Requests` com as propriedades:");
+            sb.AppendLine();
+            
+            foreach (var column in columns)
+            {
+                sb.AppendLine($"- `{column.type} {ConvertToPascalCase(column.name)}`");
+            }
+            
+            sb.AppendLine();
+            sb.AppendLine("### 2. Criar DTO de Response");
+            sb.AppendLine($"Criar `{endpointName}Response` em `Models/Responses` com as propriedades necessárias.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 3. Criar HTTP Client Service");
+            sb.AppendLine($"Criar interface e implementação `I{endpointName}HttpService` para chamar a API CORE.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 4. Criar BFF Service");
+            sb.AppendLine($"Criar `{endpointName}Service` que orquestra chamadas e transforma dados.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 5. Adicionar Endpoint no Controller");
+            sb.AppendLine($"Adicionar endpoint `{endpointType.ToUpper()} /{endpointName}` no controller `{controller}Controller`.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 6. Configurar HttpClient");
+            sb.AppendLine("Registrar o HttpClient no DI Container com a URL base da API CORE.");
+        }
+
+        private void GenerateWebPrompt(
+            StringBuilder sb,
+            string controller,
+            string endpointType,
+            string endpointName,
+            string methodName,
+            List<(string name, string type)> columns)
+        {
+            sb.AppendLine("## ?? Instruções para Implementação (WEB)");
+            sb.AppendLine();
+            sb.AppendLine("### 1. Criar Model/ViewModel");
+            sb.AppendLine($"Criar `{endpointName}ViewModel` com as propriedades:");
+            sb.AppendLine();
+            
+            foreach (var column in columns)
+            {
+                sb.AppendLine($"- `{column.type} {ConvertToPascalCase(column.name)}`");
+            }
+            
+            sb.AppendLine();
+            sb.AppendLine("### 2. Criar Service para HTTP Client");
+            sb.AppendLine($"Criar `{endpointName}Service` para chamar a BFF API.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 3. Criar Controller");
+            sb.AppendLine($"Criar action `{methodName}` no controller `{controller}Controller`.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 4. Criar View");
+            sb.AppendLine($"Criar view `{endpointName}.cshtml` com formulário/listagem.");
+            sb.AppendLine();
+            
+            sb.AppendLine("### 5. Adicionar Validação");
+            sb.AppendLine("Adicionar data annotations e validação client-side.");
         }
 
         private string ConvertToPascalCase(string text)
@@ -352,69 +229,17 @@ namespace AutomacaoGIT.Services.Implementations
 
             return sb.ToString();
         }
-    }
 
-    // Classes para deserialização do JSON
-    public class PromptTemplate
-    {
-        [JsonPropertyName("steps")]
-        public List<PromptStep> Steps { get; set; } = new();
-    }
+        private string ToCamelCase(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
 
-    public class PromptStep
-    {
-        [JsonPropertyName("titulo")]
-        public string? Titulo { get; set; }
-        
-        [JsonPropertyName("descricao")]
-        public string? Descricao { get; set; }
-        
-        [JsonPropertyName("caminho")]
-        public string? Caminho { get; set; }
-        
-        [JsonPropertyName("exemplo")]
-        public string? Exemplo { get; set; }
-        
-        [JsonPropertyName("namespace")]
-        public string? Namespace { get; set; }
-        
-        [JsonPropertyName("arquivo")]
-        public string? Arquivo { get; set; }
-        
-        [JsonPropertyName("modeloBase")]
-        public string? ModeloBase { get; set; }
-        
-        [JsonPropertyName("observacao")]
-        public string? Observacao { get; set; }
-        
-        [JsonPropertyName("interfaces")]
-        public string? Interfaces { get; set; }
-        
-        [JsonPropertyName("implementacao")]
-        public string? Implementacao { get; set; }
-        
-        [JsonPropertyName("caminhoInterface")]
-        public string? CaminhoInterface { get; set; }
-        
-        [JsonPropertyName("caminhoService")]
-        public string? CaminhoService { get; set; }
-        
-        [JsonPropertyName("interfaceExemplo")]
-        public string? InterfaceExemplo { get; set; }
-        
-        [JsonPropertyName("implementacaoExemplo")]
-        public string? ImplementacaoExemplo { get; set; }
-        
-        [JsonPropertyName("caminhoDomain")]
-        public string? CaminhoDomain { get; set; }
-        
-        [JsonPropertyName("exemploInterface")]
-        public string? ExemploInterface { get; set; }
-        
-        [JsonPropertyName("interfaceApiService")]
-        public string? InterfaceApiService { get; set; }
-        
-        [JsonPropertyName("implementacaoApiService")]
-        public string? ImplementacaoApiService { get; set; }
+            var pascalCase = ConvertToPascalCase(text);
+            if (pascalCase.Length == 0)
+                return pascalCase;
+
+            return char.ToLower(pascalCase[0]) + pascalCase.Substring(1);
+        }
     }
 }
