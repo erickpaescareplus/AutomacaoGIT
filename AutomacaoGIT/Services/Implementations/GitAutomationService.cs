@@ -73,10 +73,17 @@ namespace AutomacaoGIT.Services.Implementations
                     await CloneRepositoryAsync(request, Log, LogError, cancellationToken);
                 }
 
-                // Gerenciar branch se especificada
+                // Gerenciar branch
+                // Se tem BranchName (WIT), cria a branch a partir da feature
+                // Se não tem BranchName mas tem FeatureBranch, faz checkout da feature
                 if (!string.IsNullOrWhiteSpace(request.BranchName))
                 {
                     await ManageBranchAsync(request, Log, LogError, cancellationToken);
+                }
+                else if (!string.IsNullOrWhiteSpace(request.FeatureBranch))
+                {
+                    // Apenas clonar: fazer checkout da feature branch selecionada
+                    await CheckoutFeatureBranchAsync(request, Log, LogError, cancellationToken);
                 }
 
                 // Armazena o prompt de IA se fornecido
@@ -197,6 +204,44 @@ namespace AutomacaoGIT.Services.Implementations
             else
             {
                 log("? Pull executado com sucesso");
+            }
+        }
+
+        private async Task CheckoutFeatureBranchAsync(
+            GitAutomationRequest request,
+            Action<string> log,
+            Action<string> logError,
+            CancellationToken cancellationToken)
+        {
+            log($"Fazendo checkout da branch feature: {request.FeatureBranch}");
+
+            // Verifica se a branch existe remotamente
+            var (remoteBranchCode, remoteBranchOutput, _) = await ProcessHelper.ExecuteGitCommandAsync(
+                $"ls-remote --heads origin {request.FeatureBranch}",
+                request.FullProjectPath,
+                cancellationToken);
+
+            if (remoteBranchCode == 0 && !string.IsNullOrWhiteSpace(remoteBranchOutput))
+            {
+                // Tenta fazer checkout da branch (cria local tracking se necessário)
+                var (checkoutCode, checkoutOutput, checkoutError) = await ProcessHelper.ExecuteGitCommandAsync(
+                    $"checkout {request.FeatureBranch}",
+                    request.FullProjectPath,
+                    cancellationToken,
+                    (line) => log($"  {line}"));
+
+                if (checkoutCode != 0)
+                {
+                    logError($"Erro ao fazer checkout da feature branch: {checkoutError}");
+                }
+                else
+                {
+                    log($"? Checkout realizado para: {request.FeatureBranch}");
+                }
+            }
+            else
+            {
+                logError($"Branch feature '{request.FeatureBranch}' não encontrada no repositório remoto");
             }
         }
 
