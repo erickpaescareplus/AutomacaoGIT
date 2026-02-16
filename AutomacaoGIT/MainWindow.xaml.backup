@@ -1,0 +1,405 @@
+﻿ <Window x:Class="AutomacaoGIT.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutomacaoGIT"
+        mc:Ignorable="d"
+        Title="MUFASA GIT - Desenvolvimento" 
+        Height="750" 
+        Width="1200" 
+        MinWidth="900" 
+        MinHeight="600"
+        MaxHeight="900"
+        MaxWidth="1600"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Normal"
+        Icon="imgs/mufasa.png"
+        Background="#FFF8F0">
+    
+    <Window.Resources>
+        <!-- Estilo para Labels -->
+        <Style x:Key="LabelStyle" TargetType="Label">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#D35400"/>
+            <Setter Property="Margin" Value="0,8,0,4"/>
+        </Style>
+
+        <!-- Estilo para TextBox -->
+        <Style x:Key="TextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderBrush" Value="#E67E22"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#D35400"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#BA4A00"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo para ComboBox -->
+        <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderBrush" Value="#E67E22"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Estilo para Botão Primário -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#E67E22"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="6"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.2" Color="#000000"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D35400"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#BA4A00"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#BDC3C7"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo para Botão Secundário -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#A93226"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#922B21"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo para Botão Terciário -->
+        <Style x:Key="TertiaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#95A5A6"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#7F8C8D"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#707B7C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo para Botão Browse -->
+        <Style x:Key="BrowseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#E67E22"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D35400"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#BA4A00"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo para CheckBox -->
+        <Style x:Key="CheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="#95A5A6"/>
+                    <Setter Property="Opacity" Value="0.6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Header -->
+        <Border Background="#D35400" Height="70" VerticalAlignment="Top">
+            <Grid>
+                <Grid.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="3" Opacity="0.3" Color="#000000"/>
+                </Grid.Effect>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="30,0">
+                    <!-- Logo Mufasa -->
+                    <Border Width="50" Height="50" CornerRadius="25" 
+                            BorderBrush="#E67E22" BorderThickness="2"
+                            Background="White" Margin="0,0,15,0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.4" Color="#000000"/>
+                        </Border.Effect>
+                        <Image Source="pack://application:,,,/imgs/mufasa.png" Stretch="UniformToFill">
+                            <Image.Clip>
+                                <EllipseGeometry Center="25,25" RadiusX="23" RadiusY="23"/>
+                            </Image.Clip>
+                        </Image>
+                    </Border>
+                    
+                    <StackPanel>
+                        <TextBlock Text="Mufasa Automações" FontSize="24" FontWeight="Bold" Foreground="White">
+                            <TextBlock.Effect>
+                                <DropShadowEffect BlurRadius="3" ShadowDepth="1" Opacity="0.5" Color="#000000"/>
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <TextBlock Text="Gerenciador de Branches e Repositório + Gerador de PROMPT'S" FontSize="12" Foreground="#FDEBD0" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Conteúdo Principal - TabControl -->
+        <TabControl Grid.Row="0" Margin="20,90,20,20" Background="Transparent" BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Padding" Value="20,10"/>
+                    <Setter Property="Foreground" Value="#D35400"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border x:Name="Border" Background="White" BorderBrush="#E67E22" 
+                                        BorderThickness="1,1,1,0" CornerRadius="8,8,0,0" Padding="{TemplateBinding Padding}"
+                                        Margin="0,0,5,0">
+                                    <ContentPresenter x:Name="ContentSite" ContentSource="Header" 
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#E67E22"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#F39C12"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- ABA 1: GERENCIADOR DE BRANCHES -->
+            <TabItem Header="🌿 Gerenciador de Branches">
+                <Grid Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="500" MinWidth="400"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*" MinWidth="400"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- COLUNA ESQUERDA - Formulário de Configuração -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Formulário de Entrada -->
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                    <Border Background="White" CornerRadius="8" Padding="20">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
+                        </Border.Effect>
+
+                        <StackPanel>
+                            <TextBlock Text="⚙️ Configuração do Repositório" FontSize="18" FontWeight="Bold" 
+                                       Foreground="#D35400" Margin="0,0,0,20"/>
+
+                            <!-- Projeto -->
+                            <Label Content="📦 Projeto" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbProject" Style="{StaticResource ComboBoxStyle}"
+                                      Margin="0,0,0,12" SelectedIndex="0" 
+                                      SelectionChanged="CmbProject_SelectionChanged">
+                                <ComboBoxItem Content="-- Selecione um projeto --" 
+                                              Tag="" 
+                                              Foreground="#95A5A6"
+                                              FontStyle="Italic"/>
+                                <ComboBoxItem Content="CORE - Credenciamento Prestador Cadastro API" 
+                                              Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-api"/>
+                                <ComboBoxItem Content="BFF - Credenciamento Prestador Cadastro BFF API" 
+                                              Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-bff-api"/>
+                                <ComboBoxItem Content="WEB - Credenciamento Prestador Cadastro Web" 
+                                              Tag="https://github.com/CareplusBR/credenciamento-prestador-cadastro-web"/>
+                            </ComboBox>
+
+                            <!-- URL do Repositório -->
+                            <Label Content="🔗 URL do Repositório Git" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtRepositoryUrl" Style="{StaticResource TextBoxStyle}"
+                                     IsReadOnly="True" Background="#ECF0F1" Margin="0,0,0,12"
+                                     Text=""/>
+
+                            <!-- Caminho Local Base -->
+                            <Label Content="📂 Caminho Local Base" Style="{StaticResource LabelStyle}"/>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="TxtLocalBasePath" Grid.Column="0" 
+                                         Style="{StaticResource TextBoxStyle}"
+                                         Text="C:\Projetos"/>
+                                <Button Grid.Column="2" Content="📁 Procurar" 
+                                        Style="{StaticResource BrowseButtonStyle}"
+                                        Click="BtnBrowseFolder_Click"/>
+                            </Grid>
+
+                            <!-- Branch Feature Base -->
+                            <Label Content="🌿 Branch Feature Base" Style="{StaticResource LabelStyle}"/>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="CmbFeatureBranch" Grid.Column="0"
+                                          Style="{StaticResource ComboBoxStyle}"
+                                          SelectedIndex="0"/>
+                                <Button x:Name="BtnConfigureGitHub" Grid.Column="2" 
+                                        Content="🔐 Token" 
+                                        Style="{StaticResource BrowseButtonStyle}"
+                                        Click="BtnConfigureGitHub_Click"
+                                        ToolTip="Configurar Token do GitHub para repositórios privados"/>
+                            </Grid>
+
+                            <!-- Nome da WIT -->
+                            <Label Content="🏷️ Nome da WIT" Style="{StaticResource LabelStyle}">
+                                <Label.ToolTip>
+                                    <ToolTip Content="Informe o identificador da Work Item (WIT)" 
+                                             Background="#2C3E50" Foreground="White"/>
+                                </Label.ToolTip>
+                            </Label>
+                            <TextBox x:Name="TxtWitName" Style="{StaticResource TextBoxStyle}"
+                                     Margin="0,0,0,8" Text=""/>
+
+                            <!-- Apenas Clonar (sem criar WIT) -->
+                            <CheckBox x:Name="ChkCloneOnly" 
+                                      Content="📥 Apenas Clonar (sem criar branch WIT)" 
+                                      Style="{StaticResource CheckBoxStyle}"
+                                      FontSize="12"
+                                      Margin="0,0,0,12"
+                                      Checked="ChkCloneOnly_Changed"
+                                      Unchecked="ChkCloneOnly_Changed"
+                                      ToolTip="Marque para apenas clonar o repositório na feature selecionada, sem criar uma nova branch WIT"/>
+
+                            <!-- Editor para Abrir -->
+                            <Label Content="💻 Editor para Abrir" Style="{StaticResource LabelStyle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <RadioButton x:Name="RbVisualStudio" Content="Visual Studio" 
+                                             IsChecked="True" Margin="0,0,20,0"
+                                             FontSize="13" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                                <RadioButton x:Name="RbVisualStudioCode" Content="Visual Studio Code" 
+                                             FontSize="13" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
+
+                <!-- Botões de Ação -->
+                <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                    <Button x:Name="BtnExecute" Content="🚀 Executar Automação" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Height="45" Margin="0,5"
+                            Click="BtnExecute_Click"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="BtnCancel" Content="⛔ Cancelar" Grid.Column="0"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Height="40" Margin="0,5"
+                                Click="BtnCancel_Click" IsEnabled="False"/>
+                        <Button x:Name="BtnClearLogs" Content="🗑️ Limpar Logs" Grid.Column="2"
+                                Style="{StaticResource TertiaryButtonStyle}"
+                                Height="40" Margin="0,5"
+                                Click="BtnClearLogs_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+
+            <!-- COLUNA DIREITA - Logs de Execução -->
+            <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="0">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
+                </Border.Effect>
+                
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header dos Logs -->
+                    <Border Grid.Row="0" Background="#D35400" CornerRadius="8,8,0,0" Padding="20,12">
+                        <Grid>
+                            <TextBlock Text="📋 Logs de Execução" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Left"/>
+                            <TextBlock Text="[MUFASA MODE]" FontSize="11" Foreground="#FDEBD0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Conteúdo dos Logs -->
+                    <Border Grid.Row="1" Padding="15" Background="#FFFAF5">
+                        <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <TextBlock x:Name="TxtLogs" FontFamily="Consolas" FontSize="11" 
+                                      TextWrapping="NoWrap" Padding="10" Foreground="#D35400"
+                                      Background="Transparent"/>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

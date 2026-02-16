@@ -9,14 +9,19 @@ namespace AutomacaoGIT.Services.Implementations
     /// </summary>
     public class VisualStudioLauncher : IVisualStudioLauncher
     {
-        public async Task<bool> OpenSolutionAsync(string solutionPath)
+        public async Task<Process?> OpenSolutionAsync(string solutionPath)
         {
             try
             {
                 if (!File.Exists(solutionPath))
                 {
-                    return false;
+                    return null;
                 }
+
+                // Captura processos do Visual Studio existentes antes de abrir
+                var existingProcessIds = Process.GetProcessesByName("devenv")
+                    .Select(p => p.Id)
+                    .ToHashSet();
 
                 // Tenta abrir usando o comando devenv (Visual Studio)
                 var processStartInfo = new ProcessStartInfo
@@ -27,14 +32,45 @@ namespace AutomacaoGIT.Services.Implementations
 
                 Process.Start(processStartInfo);
                 
-                // Pequeno delay para garantir que o processo iniciou
-                await Task.Delay(500);
-                
-                return true;
+                // Aguarda um pouco para o processo iniciar
+                await Task.Delay(2000);
+
+                // Tenta encontrar o novo processo do Visual Studio
+                for (int i = 0; i < 10; i++) // Tenta por até 10 segundos
+                {
+                    var currentProcesses = Process.GetProcessesByName("devenv");
+                    
+                    // Procura por um processo que não existia antes
+                    var newProcess = currentProcesses.FirstOrDefault(p => 
+                        !existingProcessIds.Contains(p.Id) && 
+                        !p.HasExited);
+
+                    if (newProcess != null)
+                    {
+                        // Registra o processo para uso posterior
+                        CopilotChatService.RegisterVisualStudioProcess(newProcess);
+                        return newProcess;
+                    }
+
+                    await Task.Delay(1000);
+                }
+
+                // Se não encontrou o novo processo, retorna o mais recente
+                var recentProcess = Process.GetProcessesByName("devenv")
+                    .Where(p => !p.HasExited)
+                    .OrderByDescending(p => p.StartTime)
+                    .FirstOrDefault();
+
+                if (recentProcess != null)
+                {
+                    CopilotChatService.RegisterVisualStudioProcess(recentProcess);
+                }
+
+                return recentProcess;
             }
             catch (Exception)
             {
-                return false;
+                return null;
             }
         }
 

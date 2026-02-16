@@ -1,0 +1,202 @@
+<Window x:Class="AutomacaoGIT.GitHubTokenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configurar Token do GitHub" 
+        Height="450" 
+        Width="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#1E1E1E">
+    
+    <Window.Resources>
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#106EBE"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#4E4E52"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="15"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Configurar Token do GitHub" 
+                       FontSize="24" 
+                       FontWeight="Bold" 
+                       Foreground="White"/>
+            <TextBlock Text="Para acessar repositorios privados" 
+                       FontSize="12" 
+                       Foreground="#999999"
+                       Margin="0,5,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" 
+                Background="#2D2D30" 
+                CornerRadius="8" 
+                Padding="15">
+            <StackPanel>
+                <TextBlock x:Name="TxtStatus" 
+                          Text="Token nao configurado" 
+                          FontSize="14" 
+                          Foreground="#FFA500"
+                          FontWeight="SemiBold"/>
+                <TextBlock Text="Repositorios privados nao podem ser acessados" 
+                          FontSize="11" 
+                          Foreground="#999999"
+                          Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="4">
+            <TextBlock Text="GitHub Personal Access Token:" 
+                       FontSize="13" 
+                       Foreground="White"
+                       Margin="0,0,0,8"/>
+            <PasswordBox x:Name="TxtToken" 
+                        Height="35"
+                        Background="#2D2D30"
+                        Foreground="White"
+                        BorderBrush="#3E3E42"
+                        BorderThickness="1"
+                        Padding="10,0"
+                        FontSize="13"/>
+        </StackPanel>
+
+        <Border Grid.Row="6" 
+                Background="#2D2D30" 
+                CornerRadius="8" 
+                Padding="15">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Como criar um token:" 
+                              FontSize="14" 
+                              Foreground="White"
+                              FontWeight="SemiBold"
+                              Margin="0,0,0,10"/>
+                    
+                    <TextBlock TextWrapping="Wrap" Foreground="#CCCCCC" FontSize="12">
+                        <Run Text="1. Acesse: "/>
+                        <Hyperlink NavigateUri="https://github.com/settings/tokens" 
+                                  RequestNavigate="Hyperlink_RequestNavigate"
+                                  Foreground="#0078D4">
+                            github.com/settings/tokens
+                        </Hyperlink>
+                    </TextBlock>
+                    
+                    <TextBlock Text="2. Clique em 'Generate new token' (classic)" 
+                              TextWrapping="Wrap" 
+                              Foreground="#CCCCCC" 
+                              FontSize="12"
+                              Margin="0,5,0,0"/>
+                    
+                    <TextBlock Text="3. De um nome (ex: 'AutomacaoGIT')" 
+                              TextWrapping="Wrap" 
+                              Foreground="#CCCCCC" 
+                              FontSize="12"
+                              Margin="0,5,0,0"/>
+                    
+                    <TextBlock Text="4. Selecione o escopo: repo (acesso total)" 
+                              TextWrapping="Wrap" 
+                              Foreground="#CCCCCC" 
+                              FontSize="12"
+                              Margin="0,5,0,0"/>
+                    
+                    <TextBlock Text="5. Clique em 'Generate token' e copie" 
+                              TextWrapping="Wrap" 
+                              Foreground="#CCCCCC" 
+                              FontSize="12"
+                              Margin="0,5,0,0"/>
+                    
+                    <TextBlock Text="6. Cole o token acima e clique em 'Salvar'" 
+                              TextWrapping="Wrap" 
+                              Foreground="#CCCCCC" 
+                              FontSize="12"
+                              Margin="0,5,0,10"/>
+                    
+                    <Border Background="#3E3E42" 
+                            CornerRadius="4" 
+                            Padding="10"
+                            Margin="0,10,0,0">
+                        <TextBlock TextWrapping="Wrap" 
+                                  Foreground="#FFA500" 
+                                  FontSize="11">
+                            <Run Text="IMPORTANTE: "/>
+                            <Run Text="Guarde o token em local seguro! Ele so e exibido uma vez." 
+                                 Foreground="#CCCCCC"/>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="BtnRemove" 
+                    Content="Remover Token" 
+                    Grid.Column="0"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="BtnRemove_Click"
+                    HorizontalAlignment="Left"
+                    Visibility="Collapsed"/>
+
+            <Button Content="Cancelar" 
+                    Grid.Column="2"
+                    Style="{StaticResource SecondaryButton}"
+                    MinWidth="100"
+                    Click="BtnCancel_Click"/>
+
+            <Button Content="Salvar" 
+                    Grid.Column="4"
+                    Style="{StaticResource ModernButton}"
+                    MinWidth="120"
+                    Click="BtnSave_Click"/>
+        </Grid>
+    </Grid>
+</Window>

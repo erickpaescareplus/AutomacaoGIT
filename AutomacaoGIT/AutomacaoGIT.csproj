@@ -6,6 +6,28 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Incluir imagens como recursos -->
+    <Resource Include="imgs\mufasa.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EnvDTE" Version="17.8.37221" />
+    <PackageReference Include="EnvDTE80" Version="17.8.37221" />
+    <COMReference Include="EnvDTE">
+      <Guid>80cc9f66-e7d8-4ddd-85b6-d9e6cd0e93e2</Guid>
+      <VersionMajor>8</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
 
 </Project>

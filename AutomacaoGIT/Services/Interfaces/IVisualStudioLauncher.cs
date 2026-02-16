@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace AutomacaoGIT.Services.Interfaces
 {
     /// <summary>
@@ -9,8 +11,8 @@ namespace AutomacaoGIT.Services.Interfaces
         /// Abre uma solution no Visual Studio
         /// </summary>
         /// <param name="solutionPath">Caminho completo da .sln</param>
-        /// <returns>True se conseguiu abrir, False caso contrário</returns>
-        Task<bool> OpenSolutionAsync(string solutionPath);
+        /// <returns>Processo do Visual Studio se conseguiu abrir, null caso contrário</returns>
+        Task<Process?> OpenSolutionAsync(string solutionPath);
 
         /// <summary>
         /// Busca arquivo .sln em um diretório

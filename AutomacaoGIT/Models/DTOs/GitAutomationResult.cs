@@ -13,6 +13,7 @@ namespace AutomacaoGIT.Models.DTOs
         public bool IsSuccess => Status == GitOperationStatus.Success;
         public string? SolutionPath { get; set; }
         public string? ProjectPath { get; set; }
+        public string? PromptFilePath { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public TimeSpan? Duration => EndTime.HasValue ? EndTime.Value - StartTime : null;
