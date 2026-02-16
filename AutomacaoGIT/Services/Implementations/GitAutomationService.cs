@@ -73,10 +73,21 @@ namespace AutomacaoGIT.Services.Implementations
                     await CloneRepositoryAsync(request, Log, LogError, cancellationToken);
                 }
 
-                // Gerenciar branch se especificada
+                // Gerenciar branch WIT se especificada, ou apenas fazer checkout da feature branch
                 if (!string.IsNullOrWhiteSpace(request.BranchName))
                 {
                     await ManageBranchAsync(request, Log, LogError, cancellationToken);
+                }
+                else if (!string.IsNullOrWhiteSpace(request.FeatureBranch))
+                {
+                    // Modo "Apenas Clonar": fazer checkout apenas da feature branch selecionada
+                    await CheckoutFeatureBranchAsync(request, Log, LogError, cancellationToken);
+                }
+
+                // Armazena o prompt de IA se fornecido
+                if (!string.IsNullOrWhiteSpace(request.AIPrompt))
+                {
+                    await SaveAIPromptAsync(request, Log, cancellationToken);
                 }
 
                 result.Status = GitOperationStatus.Success;
@@ -261,7 +272,7 @@ namespace AutomacaoGIT.Services.Implementations
                     }
                     else
                     {
-                        log($"? Feature branch não encontrada no remoto, criando a partir da branch atual");
+                        log($"?? Feature branch não encontrada no remoto, criando a partir da branch atual");
                     }
                 }
                 
@@ -280,6 +291,82 @@ namespace AutomacaoGIT.Services.Implementations
                 {
                     log($"? Branch criada e checkout realizado: {request.BranchName}");
                 }
+            }
+        }
+
+        private async Task CheckoutFeatureBranchAsync(
+            GitAutomationRequest request,
+            Action<string> log,
+            Action<string> logError,
+            CancellationToken cancellationToken)
+        {
+            log($"Modo 'Apenas Clonar': fazendo checkout da feature branch: {request.FeatureBranch}");
+
+            // Verifica se a branch existe remotamente
+            var (remoteBranchCode, remoteBranchOutput, _) = await ProcessHelper.ExecuteGitCommandAsync(
+                $"ls-remote --heads origin {request.FeatureBranch}",
+                request.FullProjectPath,
+                cancellationToken);
+
+            if (remoteBranchCode == 0 && !string.IsNullOrWhiteSpace(remoteBranchOutput))
+            {
+                log($"Feature branch encontrada no remoto");
+
+                // Fazer checkout da branch remota
+                var (checkoutCode, checkoutOutput, checkoutError) = await ProcessHelper.ExecuteGitCommandAsync(
+                    $"checkout {request.FeatureBranch}",
+                    request.FullProjectPath,
+                    cancellationToken,
+                    (line) => log($"  {line}"));
+
+                if (checkoutCode != 0)
+                {
+                    logError($"Erro ao fazer checkout da feature branch: {checkoutError}");
+                    throw new InvalidOperationException($"Falha ao fazer checkout: {checkoutError}");
+                }
+                else
+                {
+                    log($"? Checkout realizado com sucesso para: {request.FeatureBranch}");
+
+                    // Fazer pull para garantir que está atualizada
+                    log($"Atualizando branch {request.FeatureBranch}...");
+                    var (pullCode, pullOutput, pullError) = await ProcessHelper.ExecuteGitCommandAsync(
+                        "pull",
+                        request.FullProjectPath,
+                        cancellationToken,
+                        (line) => log($"  {line}"));
+
+                    if (pullCode != 0)
+                    {
+                        log($"?? Aviso ao atualizar branch: {pullError}");
+                    }
+                    else
+                    {
+                        log($"? Branch atualizada com sucesso");
+                    }
+                }
+            }
+            else
+            {
+                logError($"Feature branch '{request.FeatureBranch}' não encontrada no repositório remoto");
+                throw new InvalidOperationException($"Branch '{request.FeatureBranch}' não existe no remoto");
+            }
+        }
+
+        private async Task SaveAIPromptAsync(
+            GitAutomationRequest request,
+            Action<string> log,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var promptFilePath = Path.Combine(request.FullProjectPath, ".ai-prompt.txt");
+                await File.WriteAllTextAsync(promptFilePath, request.AIPrompt!, cancellationToken);
+                log($"? Prompt de IA salvo em: {promptFilePath}");
+            }
+            catch (Exception ex)
+            {
+                log($"? Não foi possível salvar o prompt de IA: {ex.Message}");
             }
         }
     }

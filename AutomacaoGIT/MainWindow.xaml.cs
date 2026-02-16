@@ -1,15 +1,14 @@
-using System.Windows;
+Ôªøusing System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Media;
 using AutomacaoGIT.Models.DTOs;
 using AutomacaoGIT.Services.Implementations;
 using AutomacaoGIT.Services.Interfaces;
 using Microsoft.Win32;
+using System.IO;
 using WpfMessageBox = System.Windows.MessageBox;
-using WpfButton = System.Windows.Controls.Button;
 using WpfTextBox = System.Windows.Controls.TextBox;
 using WpfComboBox = System.Windows.Controls.ComboBox;
+using WpfButton = System.Windows.Controls.Button;
 
 namespace AutomacaoGIT
 {
@@ -20,80 +19,31 @@ namespace AutomacaoGIT
     {
         private readonly IGitAutomationService _gitAutomationService;
         private readonly IVisualStudioLauncher _vsLauncher;
-        private readonly IPromptGeneratorService _promptGeneratorService;
+        private readonly IGitHubService _gitHubService;
         private CancellationTokenSource? _cancellationTokenSource;
-        private int _columnCounter = 1; // Contador para IDs ˙nicos dos campos de coluna
-
-        private readonly Dictionary<string, List<string>> _featureBranches = new()
-        {
-            ["CORE"] = new List<string>
-            {
-                "feature-B252856_PreCad_Negociacao_Mat_Med",
-                "feature-B252857_PreCad_Divulgacao_Atendimento",
-                "feature-B252854_PreCad_Controle_Docs",
-                "feature-B253650_PreCad_Corpo_Clinico",
-                "feature-B253645_PreCad_Especialidades",
-                "feature-B239441_Historico_Prestadores_Beta",
-                "feature-B218164_Cadastro_Prestador_Inclusao",
-                "feature-B253637_PreCad_Dados_Gerais",
-                "feature-B253657_PreCad_Dados_De_Pagamnto",
-                "feature-B253647_PreCad_CHs",
-                "feature-B252858_PreCad_Qualificacoes",
-                "feature_inclusao_espelho"
-            },
-            ["BFF"] = new List<string>
-            {
-                "feature-B252854_PreCad_Controle_Docs",
-                "feature-B253645_PreCad_Especialidades",
-                "feature-B252857_PreCad_Divulgacao_Atendimento",
-                "feature-B252856_PreCad_Negociacao_Mat_Med",
-                "feature-B239441_Historico_Prestadores_Beta",
-                "feature-B218164_Cadastro_Prestador_Inclusao",
-                "feature-B253650_PreCad_Corpo_Clinico",
-                "feature-B253647_PreCad_CHs",
-                "feature-B253657_PreCad_Dados_De_Pagamnto",
-                "feature-B253637_PreCad_Dados_Gerais",
-                "feature-B252858_PreCad_Qualificacoes"
-            },
-            ["WEB"] = new List<string>
-            {
-                "feature-B239447_PCadOrdemRedeCredenciada_Beta",
-                "feature-B253650_PreCad_Corpo_Clinico",
-                "feature-B218164_Cadastro_Prestador_Inclusao",
-                "feature-B253647_PreCad_CHs",
-                "feature-B239441_Historico_Prestadores_Beta",
-                "feature-B253637_PreCad_Dados_Gerais",
-                "feature-B253645_PreCad_Especialidades",
-                "feature-B252854_PreCad_Controle_Docs",
-                "feature-B253657_PreCad_Dados_De_Pagamnto",
-                "feature-B252858_PreCad_Qualificacoes",
-                "feature-B252857_PreCad_Divulgacao_Atendimento",
-                "feature-B252856_PreCad_Negociacao_Mat_Med"
-            }
-        };
 
         public MainWindow()
         {
             InitializeComponent();
             
-            // InjeÁ„o de dependÍncias manual (pode ser substituÌdo por DI Container)
+            // Inje√ß√£o de depend√™ncias manual (pode ser substitu√≠do por DI Container)
             _gitAutomationService = new GitAutomationService();
             _vsLauncher = new VisualStudioLauncher();
-            _promptGeneratorService = new PromptGeneratorService();
+            _gitHubService = new GitHubService();
 
-            // Inicializa as branches features para CORE (padr„o)
-            LoadFeatureBranches("CORE");
+            // Inicializa ComboBox vazio - branches ser√£o carregadas ao selecionar projeto
+            CmbFeatureBranch.Items.Add("?? Selecione um projeto primeiro");
+            CmbFeatureBranch.SelectedIndex = 0;
+            CmbFeatureBranch.IsEnabled = false;
 
-            // Configura visibilidade inicial das seÁıes de prompt
-            InitializePromptSections();
-
-            AddLog("Sistema iniciado. Pronto para executar automaÁıes.");
-        }
-
-        private void InitializePromptSections()
-        {
-            // Por padr„o, o gerador est· desativado, ent„o esconde a seÁ„o
-            PromptGeneratorSection.Visibility = Visibility.Collapsed;
+            AddLog("?? Sistema Mufasa iniciado. Pronto para executar automa√ß√µes!");
+            AddLog("?? Instru√ß√µes:");
+            AddLog("   1. Selecione um projeto (CORE/BFF/WEB)");
+            AddLog("   2. Aguarde o carregamento das branches feature");
+            AddLog("   3. Configure os demais campos");
+            AddLog("   4. Execute a automa√ß√£o");
+            AddLog("");
+            AddLog("?? Dica: Configure o token do GitHub (bot√£o '?? Token') para acessar reposit√≥rios privados.");
         }
 
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
@@ -108,12 +58,13 @@ namespace AutomacaoGIT
 
             try
             {
-                // Extrai o nome do projeto da URL do repositÛrio
+                // Extrai o nome do projeto da URL do reposit√≥rio
                 var repositoryUrl = TxtRepositoryUrl.Text.Trim();
                 var projectFolderName = repositoryUrl.Split('/').LastOrDefault()?.Replace(".git", "") ?? "projeto";
 
-                // A branch WIT ser· apenas o nome digitado pelo usu·rio
-                var witName = TxtWitName.Text.Trim();
+                // A branch WIT ser√° apenas o nome digitado pelo usu√°rio (ou null se for apenas clonar)
+                var isCloneOnly = ChkCloneOnly?.IsChecked == true;
+                var witName = isCloneOnly ? null : TxtWitName.Text.Trim();
 
                 var request = new GitAutomationRequest
                 {
@@ -121,13 +72,24 @@ namespace AutomacaoGIT
                     LocalBasePath = TxtLocalBasePath.Text.Trim(),
                     ProjectFolderName = projectFolderName,
                     BranchName = witName,
-                    FeatureBranch = CmbFeatureBranch.SelectedItem?.ToString()
+                    FeatureBranch = CmbFeatureBranch.SelectedItem?.ToString(),
+                    AIPrompt = null
                 };
 
-                AddLog("=== INICIANDO EXECU«√O ===");
+                AddLog("=== INICIANDO EXECU√á√ÉO ===");
+                if (isCloneOnly)
+                {
+                    AddLog("üì• Modo: Apenas Clonar (sem criar branch WIT)");
+                    AddLog($"üåø Branch alvo: {CmbFeatureBranch.SelectedItem}");
+                }
+                else
+                {
+                    AddLog($"üè∑Ô∏è Branch WIT: {witName}");
+                    AddLog($"üåø Branch base: {CmbFeatureBranch.SelectedItem}");
+                }
                 AddLog("");
 
-                // Executa a automaÁ„o com logs em tempo real
+                // Executa a automa√ß√£o com logs em tempo real
                 var result = await _gitAutomationService.ExecuteAutomationAsync(
                     request,
                     onLogReceived: (log) => Dispatcher.Invoke(() => AddLog(log)),
@@ -140,6 +102,19 @@ namespace AutomacaoGIT
                 {
                     AddLog("=== SUCESSO! ===");
                     
+                    // Informar sobre o arquivo de prompt se foi gerado
+                    if (!string.IsNullOrEmpty(result.PromptFilePath) && File.Exists(result.PromptFilePath))
+                    {
+                        AddLog("");
+                        AddLog("?? Prompt gerado com sucesso!");
+                        AddLog($"   Arquivo: COPILOT-PROMPT.md");
+                        AddLog($"   Caminho: {result.PromptFilePath}");
+                        AddLog("");
+                        AddLog("?? O arquivo est√° no reposit√≥rio clonado.");
+                        AddLog("   Abra-o no editor para ver as instru√ß√µes detalhadas!");
+                        AddLog("");
+                    }
+                    
                     // Verificar qual editor abrir
                     if (RbVisualStudio != null && RbVisualStudio.IsChecked == true)
                     {
@@ -149,44 +124,22 @@ namespace AutomacaoGIT
                         if (solutionPath != null)
                         {
                             AddLog($"Solution encontrada: {solutionPath}");
-                            
-                            string? promptFilePath = null;
-                            
-                            // Verificar se deve gerar prompt automaticamente
-                            if (ChkGeneratePrompt.IsChecked == true)
-                            {
-                                AddLog("");
-                                AddLog("?? Gerando prompt automaticamente...");
-                                
-                                promptFilePath = await GeneratePromptFileAsync(request.FullProjectPath);
-                            }
-                            
                             AddLog("Abrindo Visual Studio...");
-                            var vsProcess = await _vsLauncher.OpenSolutionAsync(solutionPath, promptFilePath);
+                            
+                            var vsProcess = await _vsLauncher.OpenSolutionAsync(solutionPath);
                             
                             if (vsProcess != null)
                             {
                                 AddLog("? Visual Studio aberto com sucesso!");
-                                
-                                if (promptFilePath != null)
-                                {
-                                    AddLog("");
-                                    AddLog("?? PR”XIMOS PASSOS:");
-                                    AddLog("   1. O arquivo com o prompt j· est· aberto no Visual Studio");
-                                    AddLog("   2. Pressione Ctrl + / para abrir o GitHub Copilot Chat");
-                                    AddLog("   3. Digite '@workspace' ou selecione o arquivo ativo");
-                                    AddLog("   4. PeÁa ao Copilot para executar as instruÁıes do documento");
-                                    AddLog("");
-                                }
                             }
                             else
                             {
-                                AddLog("? N„o foi possÌvel abrir o Visual Studio automaticamente");
+                                AddLog("?? N√£o foi poss√≠vel abrir o Visual Studio automaticamente");
                             }
                         }
                         else
                         {
-                            AddLog("? Nenhuma solution (.sln) encontrada no projeto");
+                            AddLog("?? Nenhuma solution (.sln) encontrada no projeto");
                         }
                     }
                     else if (RbVisualStudioCode != null && RbVisualStudioCode.IsChecked == true)
@@ -200,13 +153,13 @@ namespace AutomacaoGIT
                         }
                         else
                         {
-                            AddLog("? N„o foi possÌvel abrir o Visual Studio Code automaticamente");
+                            AddLog("?? N√£o foi poss√≠vel abrir o Visual Studio Code automaticamente");
                         }
                     }
 
                     WpfMessageBox.Show(
-                        "AutomaÁ„o executada com sucesso!\n\n" +
-                        $"DuraÁ„o: {result.Duration?.TotalSeconds:F2}s\n" +
+                        "Automa√ß√£o executada com sucesso!\n\n" +
+                        $"Dura√ß√£o: {result.Duration?.TotalSeconds:F2}s\n" +
                         $"Projeto: {request.FullProjectPath}",
                         "Sucesso",
                         MessageBoxButton.OK,
@@ -214,7 +167,7 @@ namespace AutomacaoGIT
                 }
                 else
                 {
-                    AddLog("=== FALHA NA EXECU«√O ===");
+                    AddLog("=== FALHA NA EXECU√á√ÉO ===");
                     AddLog($"Status: {result.Status}");
                     
                     if (result.Errors.Any())
@@ -223,12 +176,12 @@ namespace AutomacaoGIT
                         AddLog("ERROS ENCONTRADOS:");
                         foreach (var error in result.Errors)
                         {
-                            AddLog($"  ï {error}");
+                            AddLog($"  ‚Ä¢ {error}");
                         }
                     }
 
                     WpfMessageBox.Show(
-                        "A automaÁ„o falhou. Verifique os logs para mais detalhes.",
+                        "A automa√ß√£o falhou. Verifique os logs para mais detalhes.",
                         "Erro",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
@@ -236,10 +189,10 @@ namespace AutomacaoGIT
             }
             catch (Exception ex)
             {
-                AddLog($"ERRO CRÕTICO: {ex.Message}");
+                AddLog($"ERRO CR√çTICO: {ex.Message}");
                 WpfMessageBox.Show(
                     $"Erro inesperado:\n{ex.Message}",
-                    "Erro CrÌtico",
+                    "Erro Cr√≠tico",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
@@ -255,7 +208,7 @@ namespace AutomacaoGIT
         {
             if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
             {
-                AddLog("? CANCELAMENTO SOLICITADO PELO USU¡RIO");
+                AddLog("? CANCELAMENTO SOLICITADO PELO USU√ÅRIO");
                 _cancellationTokenSource.Cancel();
                 BtnCancel.IsEnabled = false;
             }
@@ -270,7 +223,7 @@ namespace AutomacaoGIT
         {
             var dialog = new OpenFolderDialog
             {
-                Title = "Selecione o diretÛrio base",
+                Title = "Selecione o diret√≥rio base",
                 InitialDirectory = TxtLocalBasePath.Text
             };
 
@@ -280,70 +233,150 @@ namespace AutomacaoGIT
             }
         }
 
-        private void CmbProject_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void BtnConfigureGitHub_Click(object sender, RoutedEventArgs e)
         {
-            // Evita erro durante inicializaÁ„o quando os controles ainda n„o foram criados
+            var tokenWindow = new GitHubTokenWindow
+            {
+                Owner = this
+            };
+
+            if (tokenWindow.ShowDialog() == true && tokenWindow.TokenWasUpdated)
+            {
+                // Token foi atualizado, recarregar branches
+                _gitHubService.RefreshAuthentication();
+                
+                AddLog("?? Token do GitHub atualizado.");
+                AddLog("   Recarregando branches...");
+                
+                // Recarregar branches do projeto atual
+                if (CmbProject.SelectedItem is ComboBoxItem selectedItem)
+                {
+                    var repositoryUrl = selectedItem.Tag?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(repositoryUrl))
+                    {
+                        _ = LoadFeatureBranchesFromGitHubAsync(repositoryUrl);
+                    }
+                }
+            }
+        }
+
+        private async void CmbProject_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            // Evita erro durante inicializa√ß√£o quando os controles ainda n√£o foram criados
             if (TxtRepositoryUrl == null || CmbFeatureBranch == null)
                 return;
 
             if (CmbProject.SelectedItem is ComboBoxItem selectedItem)
             {
-                // Atualiza a URL do repositÛrio    
-                TxtRepositoryUrl.Text = selectedItem.Tag?.ToString() ?? "";
+                // Atualiza a URL do reposit√≥rio    
+                var repositoryUrl = selectedItem.Tag?.ToString() ?? "";
+                
+                // Se for a op√ß√£o padr√£o "Selecione um projeto", limpa tudo e n√£o busca branches
+                if (string.IsNullOrEmpty(repositoryUrl))
+                {
+                    TxtRepositoryUrl.Text = "";
+                    CmbFeatureBranch.Items.Clear();
+                    CmbFeatureBranch.Items.Add("?? Selecione um projeto primeiro");
+                    CmbFeatureBranch.SelectedIndex = 0;
+                    CmbFeatureBranch.IsEnabled = false;
+                    AddLog("?? Aguardando sele√ß√£o de projeto...");
+                    return;
+                }
+                
+                TxtRepositoryUrl.Text = repositoryUrl;
 
-                // Atualiza as branches features disponÌveis
-                var projectKey = "BFF";
-                var content = selectedItem.Content?.ToString() ?? "";
-                if (content.StartsWith("CORE"))
-                    projectKey = "CORE";
-                else if (content.StartsWith("WEB"))
-                    projectKey = "WEB";
-                
-                LoadFeatureBranches(projectKey);
-                
-                // Desabilita gerador de prompt para WEB
-                UpdatePromptGeneratorAvailability(projectKey);
+                // Carregar branches do GitHub
+                await LoadFeatureBranchesFromGitHubAsync(repositoryUrl);
             }
         }
 
-        private void UpdatePromptGeneratorAvailability(string projectKey)
-        {
-            if (ChkGeneratePrompt == null)
-                return;
-
-            if (projectKey == "WEB")
-            {
-                // Desabilita para WEB
-                ChkGeneratePrompt.IsEnabled = false;
-                ChkGeneratePrompt.IsChecked = false;
-                ChkGeneratePrompt.Content = "?? Gerador de Prompt (Em ConstruÁ„o para WEB)";
-                ChkGeneratePrompt.ToolTip = "O gerador de prompt para projeto WEB est· em desenvolvimento";
-                PromptGeneratorSection.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                // Habilita para CORE e BFF
-                ChkGeneratePrompt.IsEnabled = true;
-                ChkGeneratePrompt.Content = "?? Habilitar Gerador de Prompt";
-                ChkGeneratePrompt.ToolTip = null;
-            }
-        }
-
-        private void LoadFeatureBranches(string projectKey)
+        private async Task LoadFeatureBranchesFromGitHubAsync(string repositoryUrl)
         {
             CmbFeatureBranch.Items.Clear();
-            
-            if (_featureBranches.TryGetValue(projectKey, out var branches))
+            CmbFeatureBranch.Items.Add("?? Carregando branches do GitHub...");
+            CmbFeatureBranch.SelectedIndex = 0;
+            CmbFeatureBranch.IsEnabled = false;
+
+            try
             {
-                foreach (var branch in branches)
+                if (string.IsNullOrEmpty(repositoryUrl))
                 {
-                    CmbFeatureBranch.Items.Add(branch);
+                    AddLog("?? URL do reposit√≥rio n√£o fornecida.");
+                    CmbFeatureBranch.Items.Clear();
+                    CmbFeatureBranch.Items.Add("? URL inv√°lida");
+                    CmbFeatureBranch.SelectedIndex = 0;
+                    return;
                 }
+
+                AddLog($"?? Buscando branches com prefixo 'feature-' do reposit√≥rio...");
                 
-                if (CmbFeatureBranch.Items.Count > 0)
+                // Buscar branches com prefixo "feature-"
+                var branches = await _gitHubService.GetBranchesAsync(repositoryUrl, "feature-");
+                
+                CmbFeatureBranch.Items.Clear();
+
+                if (branches.Any())
                 {
+                    AddLog($"? {branches.Count} branch(es) feature encontrada(s).");
+                    
+                    // Preencher ComboBox
+                    foreach (var branch in branches)
+                    {
+                        CmbFeatureBranch.Items.Add(branch);
+                    }
+                    
                     CmbFeatureBranch.SelectedIndex = 0;
                 }
+                else
+                {
+                    AddLog("?? Nenhuma branch com prefixo 'feature-' encontrada no reposit√≥rio.");
+                    AddLog("   Verifique se o reposit√≥rio possui branches feature.");
+                    
+                    CmbFeatureBranch.Items.Add("? Nenhuma branch 'feature-*' encontrada");
+                    CmbFeatureBranch.SelectedIndex = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = ex.Message;
+                var isAuthError = errorMessage.Contains("404") || errorMessage.Contains("Not Found");
+                var isRateLimitError = errorMessage.Contains("RATE LIMIT EXCEDIDO");
+                var isAccessDeniedError = errorMessage.Contains("ACESSO NEGADO");
+                var isTokenError = errorMessage.Contains("401") || errorMessage.Contains("Unauthorized");
+                
+                AddLog($"? ERRO ao buscar branches: {errorMessage}");
+                
+                if (isRateLimitError)
+                {
+                    AddLog("?? Limite de requisi√ß√µes excedido. Configure um token do GitHub (bot√£o '?? Token').");
+                }
+                else if (isAccessDeniedError)
+                {
+                    AddLog("?? Acesso negado ao reposit√≥rio.");
+                    AddLog("?? Solu√ß√£o: Configure SSO no token (github.com/settings/tokens ? Configure SSO ? Authorize CareplusBR)");
+                }
+                else if (isTokenError)
+                {
+                    AddLog("?? Token inv√°lido ou expirado. Atualize o token (bot√£o '?? Token').");
+                }
+                else if (isAuthError)
+                {
+                    AddLog("?? Reposit√≥rio privado. Configure um token do GitHub (bot√£o '?? Token').");
+                }
+                
+                CmbFeatureBranch.Items.Clear();
+                var errorText = isRateLimitError ? "? Limite excedido" :
+                                isAccessDeniedError ? "? Acesso negado - Configure SSO" :
+                                isTokenError ? "? Token inv√°lido" :
+                                isAuthError ? "? Reposit√≥rio privado" : 
+                                "? Erro ao carregar";
+                CmbFeatureBranch.Items.Add(errorText);
+                CmbFeatureBranch.SelectedIndex = 0;
+            }
+            finally
+            {
+                CmbFeatureBranch.IsEnabled = CmbFeatureBranch.Items.Count > 0 && 
+                                           !CmbFeatureBranch.Items[0].ToString()!.StartsWith("?");
             }
         }
 
@@ -351,21 +384,23 @@ namespace AutomacaoGIT
         {
             if (string.IsNullOrWhiteSpace(TxtRepositoryUrl.Text))
             {
-                WpfMessageBox.Show("Informe a URL do repositÛrio.", "ValidaÁ„o", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show("Informe a URL do reposit√≥rio.", "Valida√ß√£o", MessageBoxButton.OK, MessageBoxImage.Warning);
                 TxtRepositoryUrl.Focus();
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(TxtLocalBasePath.Text))
             {
-                WpfMessageBox.Show("Informe o caminho local base.", "ValidaÁ„o", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show("Informe o caminho local base.", "Valida√ß√£o", MessageBoxButton.OK, MessageBoxImage.Warning);
                 TxtLocalBasePath.Focus();
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(TxtWitName.Text))
+            // Validar WIT apenas se n√£o for "Apenas Clonar"
+            var isCloneOnly = ChkCloneOnly?.IsChecked == true;
+            if (!isCloneOnly && string.IsNullOrWhiteSpace(TxtWitName.Text))
             {
-                WpfMessageBox.Show("Informe o nome da WIT.", "ValidaÁ„o", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show("Informe o nome da WIT ou marque 'Apenas Clonar'.", "Valida√ß√£o", MessageBoxButton.OK, MessageBoxImage.Warning);
                 TxtWitName.Focus();
                 return false;
             }
@@ -407,286 +442,326 @@ namespace AutomacaoGIT
         {
             try
             {
+                AddLog($"?? Abrindo VS Code no diret√≥rio: {projectPath}");
+                
+                // Verificar se o diret√≥rio existe
+                if (!Directory.Exists(projectPath))
+                {
+                    AddLog($"? Erro: Diret√≥rio n√£o existe: {projectPath}");
+                    return false;
+                }
+
                 var processInfo = new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = "code",
-                    Arguments = $"\"{projectPath}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
+                    FileName = "cmd.exe",
+                    Arguments = $"/c code \"{projectPath}\"", // /c fecha o CMD ap√≥s executar
+                    UseShellExecute = false, // N√£o usa shell para n√£o mostrar janela
+                    CreateNoWindow = true,   // N√£o cria janela do CMD
+                    WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden // Janela oculta
                 };
 
-                using var process = System.Diagnostics.Process.Start(processInfo);
+                AddLog("?? Executando comando: code \"" + projectPath + "\"");
+                
+                var process = System.Diagnostics.Process.Start(processInfo);
                 if (process != null)
                 {
-                    await Task.Delay(1000);
+                    AddLog("? VS Code iniciado com sucesso!");
+                    // Aguarda um pouco para garantir que o VS Code iniciou
+                    await Task.Delay(500);
+                    // N√£o precisa aguardar o processo terminar pois o CMD j√° fecha sozinho com /c
                     return true;
                 }
+                
+                AddLog("? Processo n√£o foi iniciado (retornou null)");
+                return false;
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                AddLog($"? Erro ao abrir VS Code: {ex.Message}");
+                AddLog($"   C√≥digo de erro: {ex.NativeErrorCode}");
+                
+                if (ex.NativeErrorCode == 2) // ERROR_FILE_NOT_FOUND
+                {
+                    AddLog("");
+                    AddLog("?? O comando 'code' n√£o foi encontrado!");
+                    AddLog("   Poss√≠veis solu√ß√µes:");
+                    AddLog("   1. Verifique se o VS Code est√° instalado");
+                    AddLog("   2. Durante a instala√ß√£o, certifique-se de marcar:");
+                    AddLog("      ? Adicionar ao PATH");
+                    AddLog("   3. Se j√° instalado, adicione manualmente ao PATH:");
+                    AddLog("      C:\\Users\\[seu-usuario]\\AppData\\Local\\Programs\\Microsoft VS Code\\bin");
+                    AddLog("   4. Reinicie o terminal/aplica√ß√£o ap√≥s adicionar ao PATH");
+                }
+                else
+                {
+                    AddLog($"   Diret√≥rio tentado: {projectPath}");
+                }
+                
                 return false;
             }
             catch (Exception ex)
             {
-                AddLog($"Erro ao abrir VS Code: {ex.Message}");
-                AddLog("Dica: Certifique-se de que o VS Code est· instalado e o comando 'code' est· no PATH.");
+                AddLog($"? Erro inesperado ao abrir VS Code: {ex.Message}");
+                AddLog($"   Tipo: {ex.GetType().Name}");
+                AddLog($"   Diret√≥rio: {projectPath}");
                 return false;
             }
         }
 
-        private void ChkGeneratePrompt_Changed(object sender, RoutedEventArgs e)
+        private void ChkCloneOnly_Changed(object sender, RoutedEventArgs e)
         {
-            // Mostra ou esconde a seÁ„o do gerador baseado no checkbox
-            PromptGeneratorSection.Visibility = ChkGeneratePrompt.IsChecked == true 
+            if (TxtWitName != null)
+            {
+                var isCloneOnly = ChkCloneOnly?.IsChecked == true;
+                TxtWitName.IsEnabled = !isCloneOnly;
+                TxtWitName.Background = isCloneOnly 
+                    ? System.Windows.Media.Brushes.LightGray 
+                    : System.Windows.Media.Brushes.White;
+                
+                if (isCloneOnly)
+                {
+                    TxtWitName.Text = "";
+                }
+            }
+        }
+
+        // ============================================
+        // M√âTODOS DA ABA GERADOR DE PROMPT
+        // ============================================
+
+        private string? _generatedPromptCache;
+
+        private void CmbPromptProjectType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TableNameSectionStandalone == null) return;
+            
+            // Mostrar se√ß√£o de nome da tabela apenas para projetos CORE
+            var selectedProject = (CmbPromptProjectType?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+            TableNameSectionStandalone.Visibility = selectedProject.Contains("CORE") 
                 ? Visibility.Visible 
                 : Visibility.Collapsed;
         }
 
-        private void CmbTemplateType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void BtnAddColumnStandalone_Click(object sender, RoutedEventArgs e)
         {
-            // Mostra campo de tabela apenas para CORE
-            if (TableNameSection != null && CmbTemplateType.SelectedItem is ComboBoxItem selected)
-            {
-                var content = selected.Content?.ToString() ?? "";
-                TableNameSection.Visibility = content.StartsWith("CORE") 
-                    ? Visibility.Visible 
-                    : Visibility.Collapsed;
-            }
-        }
+            if (ColumnsContainerStandalone == null) return;
 
-        private void BtnAddColumn_Click(object sender, RoutedEventArgs e)
-        {
-            _columnCounter++;
+            var columnIndex = ColumnsContainerStandalone.Children.Count + 1;
+            var newColumnGrid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
             
-            // Criar novo Grid para nova linha
-            var newGrid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-            
-            // Definir colunas
-            newGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            newGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            newGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
-            newGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            newGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            
-            // TextBox para nome da coluna
-            var txtName = new WpfTextBox
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+            newColumnGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var txtColumnName = new WpfTextBox
             {
-                Name = $"TxtColumnName{_columnCounter}",
+                Name = $"TxtColumnNameStandalone{columnIndex}",
                 Style = (Style)FindResource("TextBoxStyle"),
                 Tag = "ColumnName"
             };
-            Grid.SetColumn(txtName, 0);
-            newGrid.Children.Add(txtName);
-            
-            // ComboBox para tipo
-            var cmbType = new WpfComboBox
+            Grid.SetColumn(txtColumnName, 0);
+
+            var cmbColumnType = new WpfComboBox
             {
-                Name = $"CmbColumnType{_columnCounter}",
+                Name = $"CmbColumnTypeStandalone{columnIndex}",
                 Style = (Style)FindResource("ComboBoxStyle"),
                 Tag = "ColumnType",
                 SelectedIndex = 0
             };
-            
-            // Adicionar tipos
-            cmbType.Items.Add(new ComboBoxItem { Content = "int" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "string" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "bool" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "decimal" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "DateTime" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "Guid" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "long" });
-            cmbType.Items.Add(new ComboBoxItem { Content = "double" });
-            
-            Grid.SetColumn(cmbType, 2);
-            newGrid.Children.Add(cmbType);
-            
-            // Bot„o remover
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "int" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "string" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "bool" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "decimal" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "DateTime" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "Guid" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "long" });
+            cmbColumnType.Items.Add(new ComboBoxItem { Content = "double" });
+            Grid.SetColumn(cmbColumnType, 2);
+
             var btnRemove = new WpfButton
             {
                 Content = "?",
                 Width = 30,
                 Height = 30,
-                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(231, 76, 60)),
+                Background = System.Windows.Media.Brushes.Red,
                 Foreground = System.Windows.Media.Brushes.White,
                 BorderThickness = new Thickness(0),
                 Cursor = System.Windows.Input.Cursors.Hand,
                 FontWeight = FontWeights.Bold,
                 FontSize = 14
             };
-            
-            btnRemove.Click += BtnRemoveColumn_Click;
-            btnRemove.Template = CreateButtonTemplate();
-            
+            btnRemove.Click += BtnRemoveColumnStandalone_Click;
             Grid.SetColumn(btnRemove, 4);
-            newGrid.Children.Add(btnRemove);
-            
-            // Adicionar ao container
-            ColumnsContainer.Children.Add(newGrid);
-            
-            // Mostrar bot„o remover do primeiro campo se tiver mais de 1
-            UpdateRemoveButtonsVisibility();
+
+            newColumnGrid.Children.Add(txtColumnName);
+            newColumnGrid.Children.Add(cmbColumnType);
+            newColumnGrid.Children.Add(btnRemove);
+
+            ColumnsContainerStandalone.Children.Add(newColumnGrid);
+            UpdateRemoveButtonsVisibilityStandalone();
         }
 
-        private void BtnRemoveColumn_Click(object sender, RoutedEventArgs e)
+        private void BtnRemoveColumnStandalone_Click(object sender, RoutedEventArgs e)
         {
             if (sender is WpfButton button && button.Parent is Grid grid)
             {
-                ColumnsContainer.Children.Remove(grid);
-                UpdateRemoveButtonsVisibility();
+                ColumnsContainerStandalone?.Children.Remove(grid);
+                UpdateRemoveButtonsVisibilityStandalone();
             }
         }
 
-        private void UpdateRemoveButtonsVisibility()
+        private void UpdateRemoveButtonsVisibilityStandalone()
         {
-            // Mostra botıes de remover apenas se houver mais de 1 campo
-            bool showRemoveButtons = ColumnsContainer.Children.Count > 1;
+            if (ColumnsContainerStandalone == null) return;
+
+            var shouldShowRemove = ColumnsContainerStandalone.Children.Count > 1;
             
-            foreach (var child in ColumnsContainer.Children)
+            foreach (var child in ColumnsContainerStandalone.Children)
             {
                 if (child is Grid grid)
                 {
                     foreach (var gridChild in grid.Children)
                     {
-                        if (gridChild is WpfButton button && button.Content.ToString() == "?")
+                        if (gridChild is WpfButton btn && btn.Content?.ToString() == "?")
                         {
-                            button.Visibility = showRemoveButtons ? Visibility.Visible : Visibility.Collapsed;
+                            btn.Visibility = shouldShowRemove ? Visibility.Visible : Visibility.Collapsed;
                         }
                     }
                 }
             }
         }
 
-        private ControlTemplate CreateButtonTemplate()
-        {
-            var template = new ControlTemplate(typeof(WpfButton));
-            var factory = new FrameworkElementFactory(typeof(Border));
-            factory.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding("Background")
-            {
-                RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent)
-            });
-            factory.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
-            
-            var contentFactory = new FrameworkElementFactory(typeof(ContentPresenter));
-            contentFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
-            contentFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
-            
-            factory.AppendChild(contentFactory);
-            template.VisualTree = factory;
-            
-            return template;
-        }
-
-        private string GetColumnsFromUI()
-        {
-            var columns = new List<string>();
-            
-            foreach (var child in ColumnsContainer.Children)
-            {
-                if (child is Grid grid)
-                {
-                    string? columnName = null;
-                    string? columnType = null;
-                    
-                    foreach (var gridChild in grid.Children)
-                    {
-                        if (gridChild is WpfTextBox txt && txt.Tag?.ToString() == "ColumnName")
-                        {
-                            columnName = txt.Text?.Trim();
-                        }
-                        else if (gridChild is WpfComboBox cmb && cmb.Tag?.ToString() == "ColumnType")
-                        {
-                            if (cmb.SelectedItem is ComboBoxItem item)
-                            {
-                                columnType = item.Content?.ToString();
-                            }
-                        }
-                    }
-                    
-                    if (!string.IsNullOrWhiteSpace(columnName) && !string.IsNullOrWhiteSpace(columnType))
-                    {
-                        columns.Add($"{columnName}:{columnType}");
-                    }
-                }
-            }
-            
-            return string.Join("; ", columns);
-        }
-
-        private async Task<string?> GeneratePromptFileAsync(string projectPath)
+        private async void BtnGeneratePrompt_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Validar campos do gerador de prompt
-                if (string.IsNullOrWhiteSpace(TxtPromptController.Text))
-                {
-                    AddLog("? Nome do Controller È obrigatÛrio");
-                    return null;
-                }
+                TxtGeneratedPrompt.Text = "‚è≥ Gerando prompt...";
+                BtnSavePromptToFile.IsEnabled = false;
 
-                if (string.IsNullOrWhiteSpace(TxtPromptEndpoint.Text))
-                {
-                    AddLog("? Nome do Endpoint È obrigatÛrio");
-                    return null;
-                }
-
-                if (string.IsNullOrWhiteSpace(TxtPromptMethod.Text))
-                {
-                    AddLog("? Nome do MÈtodo È obrigatÛrio");
-                    return null;
-                }
-
-                // Obter colunas dos campos din‚micos
-                var colunas = GetColumnsFromUI();
+                // Detectar tipo automaticamente baseado no projeto selecionado
+                var selectedProject = (CmbPromptProjectType?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
                 
-                if (string.IsNullOrWhiteSpace(colunas))
+                // Verificar se √© WEB (ainda n√£o suportado)
+                if (selectedProject.Contains("WEB"))
                 {
-                    AddLog("? Adicione pelo menos uma coluna");
-                    return null;
+                    TxtGeneratedPrompt.Text = "üöß Template para projetos WEB ainda est√° em desenvolvimento.\n\n" +
+                                             "Em breve esta funcionalidade estar√° dispon√≠vel!\n\n" +
+                                             "Por enquanto, utilize os templates para:\n" +
+                                             "  ‚Ä¢ CORE - API de Cadastro\n" +
+                                             "  ‚Ä¢ BFF - API Gateway";
+                    return;
+                }
+                
+                var templateType = selectedProject.Contains("CORE") ? "CORE" : 
+                                  selectedProject.Contains("BFF") ? "BFF" : "CORE";
+                
+                var controller = TxtPromptControllerStandalone?.Text?.Trim() ?? "";
+                var tableName = TxtPromptTableNameStandalone?.Text?.Trim() ?? "";
+                var endpointType = (CmbEndpointTypeStandalone?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Get";
+                var endpointName = TxtPromptEndpointStandalone?.Text?.Trim() ?? "";
+                var methodName = TxtPromptMethodStandalone?.Text?.Trim() ?? "";
+
+                if (string.IsNullOrEmpty(controller) || string.IsNullOrEmpty(endpointName) || string.IsNullOrEmpty(methodName))
+                {
+                    TxtGeneratedPrompt.Text = "‚ùå Erro: Preencha todos os campos obrigat√≥rios (Controller, Endpoint e M√©todo).";
+                    return;
                 }
 
-                // Determinar o tipo de template
-                var templateType = "CORE";
-                if (CmbTemplateType.SelectedItem is ComboBoxItem selectedTemplate)
+                var columns = new List<(string name, string type)>();
+                if (ColumnsContainerStandalone != null)
                 {
-                    var content = selectedTemplate.Content?.ToString() ?? "";
-                    if (content.StartsWith("BFF"))
-                        templateType = "BFF";
+                    foreach (var child in ColumnsContainerStandalone.Children)
+                    {
+                        if (child is Grid grid)
+                        {
+                            string? columnName = null;
+                            string? columnType = null;
+
+                            foreach (var gridChild in grid.Children)
+                            {
+                                if (gridChild is WpfTextBox txt && txt.Tag?.ToString() == "ColumnName")
+                                    columnName = txt.Text?.Trim();
+                                else if (gridChild is WpfComboBox cmb && cmb.Tag?.ToString() == "ColumnType")
+                                    columnType = (cmb.SelectedItem as ComboBoxItem)?.Content?.ToString();
+                            }
+
+                            if (!string.IsNullOrEmpty(columnName) && !string.IsNullOrEmpty(columnType))
+                                columns.Add((columnName, columnType));
+                        }
+                    }
                 }
 
-                // Validar nome da tabela para CORE
-                if (templateType == "CORE" && string.IsNullOrWhiteSpace(TxtPromptTableName.Text))
-                {
-                    AddLog("? Nome da Tabela È obrigatÛrio para template CORE");
-                    return null;
-                }
-
-                // Obter tipo de endpoint
-                var endpointType = CmbEndpointType.SelectedItem is ComboBoxItem selectedEndpoint
-                    ? selectedEndpoint.Content?.ToString() ?? "Get"
-                    : "Get";
-
-                var request = new PromptGeneratorRequest
-                {
-                    NomeController = TxtPromptController.Text.Trim(),
-                    TipoEndpoint = endpointType,
-                    NomeEndpoint = TxtPromptEndpoint.Text.Trim(),
-                    NomeMetodo = TxtPromptMethod.Text.Trim(),
-                    Colunas = colunas,
-                    TipoTemplate = templateType,
-                    NomeTabela = templateType == "CORE" ? TxtPromptTableName.Text.Trim() : null
-                };
-
-                var filePath = await _promptGeneratorService.CreatePromptFileAsync(
-                    request,
-                    projectPath,
-                    onLogReceived: (log) => Dispatcher.Invoke(() => AddLog(log))
+                // Usar o servi√ßo de templates
+                var templateService = new PromptTemplateService();
+                var prompt = await templateService.GeneratePromptFromTemplateAsync(
+                    templateType,
+                    controller,
+                    tableName,
+                    endpointType,
+                    endpointName,
+                    methodName,
+                    columns
                 );
 
-                return filePath;
+                if (!string.IsNullOrEmpty(prompt))
+                {
+                    _generatedPromptCache = prompt;
+                    TxtGeneratedPrompt.Text = prompt;
+                    BtnSavePromptToFile.IsEnabled = true;
+                }
+                else
+                {
+                    TxtGeneratedPrompt.Text = "‚ùå Erro ao gerar prompt. Verifique os dados informados.";
+                }
             }
             catch (Exception ex)
             {
-                AddLog($"? Erro ao gerar prompt: {ex.Message}");
-                return null;
+                TxtGeneratedPrompt.Text = $"‚ùå Erro ao gerar prompt:\n{ex.Message}";
+            }
+        }
+
+        private void BtnSavePromptToFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_generatedPromptCache))
+            {
+                WpfMessageBox.Show(
+                    "Nenhum prompt foi gerado ainda. Clique em 'Gerar Prompt' primeiro.",
+                    "Aviso",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                var saveDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Salvar Prompt",
+                    Filter = "Arquivos de Texto (*.txt)|*.txt|Arquivos Markdown (*.md)|*.md|Todos os Arquivos (*.*)|*.*",
+                    FileName = "COPILOT-PROMPT.txt",
+                    DefaultExt = ".txt"
+                };
+
+                if (saveDialog.ShowDialog() == true)
+                {
+                    File.WriteAllText(saveDialog.FileName, _generatedPromptCache);
+                    
+                    WpfMessageBox.Show(
+                        $"Prompt salvo com sucesso!\n\nArquivo: {saveDialog.FileName}",
+                        "Sucesso",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show(
+                    $"Erro ao salvar arquivo:\n{ex.Message}",
+                    "Erro",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
     }

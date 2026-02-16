@@ -11,9 +11,8 @@ namespace AutomacaoGIT.Services.Interfaces
         /// Abre uma solution no Visual Studio
         /// </summary>
         /// <param name="solutionPath">Caminho completo da .sln</param>
-        /// <param name="fileToOpen">Caminho do arquivo adicional a ser aberto (opcional)</param>
         /// <returns>Processo do Visual Studio se conseguiu abrir, null caso contrário</returns>
-        Task<Process?> OpenSolutionAsync(string solutionPath, string? fileToOpen = null);
+        Task<Process?> OpenSolutionAsync(string solutionPath);
 
         /// <summary>
         /// Busca arquivo .sln em um diretório
