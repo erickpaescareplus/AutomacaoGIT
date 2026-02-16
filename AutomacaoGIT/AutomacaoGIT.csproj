@@ -10,6 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Incluir imagens como recursos -->
+    <Resource Include="imgs\mufasa.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EnvDTE" Version="17.8.37221" />
     <PackageReference Include="EnvDTE80" Version="17.8.37221" />
     <COMReference Include="EnvDTE">
